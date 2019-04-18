@@ -17,9 +17,21 @@ This article was written to show:
 ### 3. Objective-C and lldb playground
 Learning Objective-C through the eyes of a debugger.
 
-
 ### 4. 🍪 WKWebView Cookie Thief 🍪
-Once I opened a WKWebView rendered page inside an iOS app, I wanted to use lldb to print all cookies inside the WKWebView cookie store. But once you scratch the surface, you found a lot of data structures underneath the following simple code:
+Once I opened a WKWebView rendered page inside an iOS app, I wanted my debugger (`lldb`) to print all cookies inside the `WKWebView cookie store`.
 
 ### 5. Facebook's Chisel commands
 This was a fun set of python lldb scrupt to re-use. All about the U.I.
+
+### 6. iOS create a fake ViewController
+I wanted to create a new UIViewController and load it over the top of the screen that was loaded.  This was a workout.  It jumped between Objective-C and Swift context for the debugger.
+```
+e id $vc = [UIViewController new]
+(lldb) po $vc
+<UIViewController: 0x1067116e0>
+```
+### 7. Python lldb interface
+This code create a Swift Class with lldb's Python interpreter and read the memory.
+
+### 8. lldb aliases
+You won't get far in an iOS / macOS debugging without adding command aliases. These are shorthand commands for your lldb commands.
