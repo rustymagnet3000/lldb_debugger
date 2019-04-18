@@ -1,7 +1,7 @@
 # Debugger Playground
 
-### 0. Strings in memory
-Find a hidden string with lldb Debugger.  This uses three lldb commands `section`, `memory find`, `memory read` to find a string inside a _stripped, release app_.
+### 0. Pro lldb tips
+`lldb` was Apple's debugger of choice. This article contained references to good lldb articles and a few tips to make debugging simpler.
 
 ### 1. Code Lifting
 This article was written to show xCode and a debugger working together to:
@@ -35,3 +35,9 @@ This code create a Swift Class with lldb's Python interpreter and read the memor
 
 ### 8. lldb aliases
 You won't get far in an iOS / macOS debugging without adding command aliases. These are shorthand commands for your lldb commands.
+
+### 9. Strings in memory
+Find a hidden string with lldb Debugger.  This uses three lldb commands `section`, `memory find`, `memory read` to find a string inside a _stripped, release app_.
+
+### 10. Swift code
+If you  invoked code from a Swift dynamic framework, you would have hit a lot of traps.  This article was to explain how to avoid some traps.
