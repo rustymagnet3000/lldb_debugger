@@ -14,7 +14,7 @@ This article was written to show:
 - [x] Why shipping _dormant code_ was a bad idea
 - [x] Why tiny xCode _Build Settings_ matter, when _stripping symbols_ and _dead-code_
 
-### 3. Objective-C and lldb playground
+### 3a. Objective-C debugging
 Learning Objective-C through the eyes of a debugger.
 
 ### 4. 🍪 WKWebView Cookie Thief 🍪
@@ -48,5 +48,20 @@ Loaded a framework - that was not shipped in an app - and instantiate one of the
 ### 12. Debugger language context
 In iOS, an app maybe written in Swift but a lot of the objects still had Objective-C base classes.  This article helps explain the error and fix it.
 
-### Breakpoints & Registers
-I wanted to stop at at the start of a function call and inspect the secrets.
+### 13. Breakpoints & Registers
+I wanted to stop at the start of a function call and inspect the parameters passed into the function. 🕵🏼‍♂️.
+
+### 14. Inspect 3rd party SDK
+This was lots of fun. 🦂  Without doubt, the best way to learn what a third party company is doing.
+
+### 15. Scripting
+A script to see who is calling the C API `getenv` in a running iOS app.
+
+### 16. Setup macOS for debugging
+You need to turn off Rootless if you want to connect to anything interesting.
+
+### 17a. iOS Debug on Jailbroken device
+Setup a Jailbroken iOS device for debugging.
+
+### 17b. iOS Jailbreak Bypass
+This article demonstrated a bypass of Jailbreak checks that ran immediately when you launched an app.
