@@ -40,4 +40,13 @@ You won't get far in an iOS / macOS debugging without adding command aliases. Th
 Find a hidden string with lldb Debugger.  This uses three lldb commands `section`, `memory find`, `memory read` to find a string inside a _stripped, release app_.
 
 ### 10. Swift code
-If you  invoked code from a Swift dynamic framework, you would have hit a lot of traps.  This article was to explain how to avoid some traps.
+If you  invoked code from a Swift dynamic framework, you hit a lot of traps.  This article was to explain how to avoid traps.
+
+### 11. Code injection
+Loaded a framework - that was not shipped in an app - and instantiate one of the framework's classes.
+
+### 12. Debugger language context
+In iOS, an app maybe written in Swift but a lot of the objects still had Objective-C base classes.  This article helps explain the error and fix it.
+
+### Breakpoints & Registers
+I wanted to stop at at the start of a function call and inspect the secrets.
