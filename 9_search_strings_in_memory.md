@@ -12,7 +12,9 @@ This uses three lldb commands `section`, `memory find`, `memory read` to find a 
 [0x0000010462c000-0x00000107744000] 0x0003118000 MyApp`__TEXT
 [0x00000107744000-0x00000107d48000] 0x0000604000 MyApp`__DATA
 /* removed sections for brevity */
-
+```
+Search the `Data` segment.
+```
 (lldb) mem find -s "youtube" -- 0x00000107744000 0x00000107d48000
 data found at location: 0x10793362c
 0x10793362c: 79 6f 75 74 75 62 65 2e 63 6f 6d 2f 65 6d 62 65  youtube.com/embe

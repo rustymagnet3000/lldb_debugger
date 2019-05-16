@@ -1,5 +1,5 @@
 # Debugger Playground
-If you want to debug iOS or macOS, start by reading everything by: https://github.com/DerekSelander/LLDB. Derek's book is ⭐️⭐️⭐️⭐️⭐️.
+If you want to debug iOS or macOS, start by reading everything by: https://github.com/DerekSelander/LLDB. His book is ⭐️⭐️⭐️⭐️⭐️.
 
 ### 0. Pro lldb tips
 `lldb` was Apple's debugger of choice.
