@@ -14,7 +14,8 @@ command alias yd_dump image dump symtab -m C_Playground
 ```
 #### Beautify
 ```
-command alias yd_thread_beautify settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n"
+settings show thread-format
+command alias yd_thread_beautify settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
 command alias yd_register_beautify register read -f d
 ```
 #### lldb context
