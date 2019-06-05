@@ -75,5 +75,9 @@ This article demonstrated a bypass of Jailbreak checks that ran immediately when
 ### 18. Threads
 I wrote a C program that ran multiple threads.  These threads were not tied together but they called the same function. Each started on a unique, background thread.  The threads started at roughly the same time.
 
-### 18. Heap Overflow
+### 19. Heap Overflow
 Due to no **Input Validation** or **Overflow Protection** - we overwrote the `instruction pointer` to a function of our choice.  Getting this to work on a Mac was hard.  By default `Clang` added safety flags.  You had to turn them off.
+
+### 20. Crash logs (resymbolicate)
+Release apps are `stripped` of debug symbols for a number of reasons.  These include size and protection against Reverse Engineers.  That makes finding the root cause of a crash harder.  You are required to build the app with debug symbols (a `dsym` file) and then glue this together with your crash log.  
+```
