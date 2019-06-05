@@ -5,8 +5,12 @@
 `command source <file_path>/lldb_script.txt`
 #### Import Python script
 `command script import <file_path>/lldb_python.py`
-
-#### Use Python debugger
+#### Lookup
+```
+// This works on a stripped, release app...
+(lldb) lookup -X (?i)address -m my_app
+```
+#### lldb iOS Simulators
 Avoid using xCode if you are using the Python Debugger
 - Kill xcode
 - Run iOS app in the simulator
@@ -37,4 +41,3 @@ http://www.vantagepoint.sg/blog/89-more-android-anti-debugging-fun
 http://www.secretmango.com/jimb/Whitepapers/ptrace/ptrace.html
 #### anti-debug code samples
 https://gist.github.com/joswr1ght/fb8c9f4f3f9a2feebf7f https://www.theiphonewiki.com/wiki/Bugging\_Debuggers
-
