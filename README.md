@@ -71,3 +71,9 @@ Setup a Jailbroken iOS device for debugging.
 
 ### 17b. iOS Jailbreak Bypass
 This article demonstrated a bypass of Jailbreak checks that ran immediately when an app launched.
+
+### 18. Threads
+I wrote a C program that ran multiple threads.  These threads were not tied together but they called the same function. Each started on a unique, background thread.  The threads started at roughly the same time.
+
+### 18. Heap Overflow
+Due to no **Input Validation** or **Overflow Protection** - we overwrote the `instruction pointer` to a function of our choice.  Getting this to work on a Mac was hard.  By default `Clang` added safety flags.  You had to turn them off.
