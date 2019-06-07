@@ -1,4 +1,4 @@
-# Desymbolicate an iOS App
+# Desymbolicate a crash log from an iOS App
 #### Inspiration from Apple
 https://developer.apple.com/library/archive/technotes/tn2151/_index.html#//apple_ref/doc/uid/DTS40008184-CH1-SYMBOLICATEWITHXCODE
 
@@ -31,4 +31,3 @@ export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
 
 #### Achieve same without specifying the dsym file
 `./symbolicatecrash  crash_log_20_9_2018.crash > /yourPath/crash1_symbolicated.crash`
-

@@ -32,6 +32,70 @@ Nothing will happen.  You need to refresh the screen or continue the app.
 // this is the Chisel alias for e (void)[CATransaction flush]
 ```
 
+#### TabBar
+```
+po [[UIWindow keyWindow] rootViewController]
+e id $rootvc = (id)0x7fb9ce868200
+expression -lobjc -O -- [`$rootvc` _shortMethodDescription]
+expression (void)[$rootvc setSelectedIndex:1]
+caflush
+expression (void)[$rootvc setSelectedIndex:0]
+caflush
+
+(lldb) po [$rootvc selectedViewController]
+<tinyDormant.YDJediVC: 0x7fb9cd613a80>
+
+(lldb) po [$rootvc viewControllers]
+<__NSArrayM 0x600001038810>(
+<tinyDormant.YDJediVC: 0x7fb9cd613a80>,
+<tinyDormant.YDMandalorianVC: 0x7fb9cd41f1c0>
+)
+```
+
+### UITabBarController - add a Tab at run-time
+```
+(lldb) po [[UIWindow keyWindow] rootViewController]
+<UITabBarController: 0x7fdf0f036000>
+
+(lldb) e id $tbc = (id)0x7fdf0f036000
+
+(lldb) po $tbc
+<UITabBarController: 0x7fdf0f036000>
+
+(lldb) po [$tbc description]
+<UITabBarController: 0x7fdf0f036000>
+
+// METHOD 1
+(lldb) e Class $sithVcClass = (Class) objc_getClass("tinyDormant.YDSithVC")
+(lldb) e id $sithvc = (id)[$sithVcClass new]
+(lldb) po $sithvc
+<tinyDormant.YDSithVC: 0x7fb9cd426880>
+
+// METHOD 2
+e id $newClass = (id)class_createInstance($sithVcClass, 100);
+
+
+(lldb) po [$tbc viewControllers]
+<__NSArrayM 0x6000029fc930>(
+<tinyDormant.YDJediVC: 0x7fdf0ef194e0>,
+<tinyDormant.YDMandalorianVC: 0x7fdf0ed23c50>
+)
+
+// Create mutable array
+(lldb) e NSMutableArray *$listofvcontrollers = (NSMutableArray *)[$tbc viewControllers]
+(lldb) po [$listofvcontrollers addObject:$sithvc]
+(lldb) po $listofvcontrollers
+<__NSArrayM 0x600001ce1ec0>(
+<tinyDormant.YDJediVC: 0x7fd88740a8b0>,
+<tinyDormant.YDMandalorianVC: 0x7fd889c02a10>,
+<tinyDormant.YDSithVC: 0x7fd8875125b0>
+)
+
+(lldb) po [$tbc setViewControllers:$listofvcontrollers]
+ nil
+
+(lldb) continue
+```
 #### Push a new ViewController
 ```
 (lldb) po [[UIWindow keyWindow] rootViewController]

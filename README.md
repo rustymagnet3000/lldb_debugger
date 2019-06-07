@@ -29,8 +29,10 @@ I wanted to print all cookies from `WKWebView` once somebody had selected the WK
 ### 5. Facebook's Chisel commands
 This was a fun set of python lldb scrupt to re-use. All about the U.I.
 
-### 6. Fake iOS ViewController
-I wanted to create a new UIViewController and load it over the top of the screen that was loaded.  This was a workout.  It jumped between Objective-C and Swift context for the debugger.
+### 6. Fake iOS ViewController / UITabBarController
+I wanted to create a new `UIViewController` and load it over the top of the screen that was loaded.  This was a workout.  It jumped between Objective-C and Swift context for the debugger.
+
+I then took it further to invoke `dormant` code that was left in the app by mistake and added it a `UITabBarController`.
 ```
 e id $vc = [UIViewController new]
 (lldb) po $vc
