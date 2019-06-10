@@ -11,11 +11,13 @@ This article was written to show xCode and a debugger working together to:
 - [x] extract a dynamic framework from an iOS app
 - [x] build a new app and invoke the Objective-C code
 
-### 2. Dormant code
+### 2. Dormant code / Linker flags
 This article was written to show:
-- [x] Code can be invoked, even if it was not reference in code or by a header file
-- [x] Why shipping _dormant code_ was a bad idea
-- [x] Why tiny xCode _Build Settings_ matter, when _stripping symbols_ and _dead-code_
+
+- [x] Code can be invoked, even if it is not referenced in code or by a header file
+- [x] Why shipping dormant code is a bad idea
+- [x] Why tiny xCode Build Settings matter
+- [x] Always Strip symbols and dead-code in Release builds
 
 ### 3a. Objective-C debugging
 Learning Objective-C through the eyes of a debugger.
