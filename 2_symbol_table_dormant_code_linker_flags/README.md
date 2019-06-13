@@ -26,7 +26,6 @@ int main() {
 ```
 
 #### Release build with optimization￼
-
 In Xcode, turn on Optimization to the max setting in your Release mode.
 
 > Tip ->   CMD+C over an xCode Build Setting gives the compiler flag being set
