@@ -51,8 +51,7 @@ caflush
 <tinyDormant.YDMandalorianVC: 0x7fb9cd41f1c0>
 )
 ```
-
-### UITabBarController - add a Tab at run-time
+#### Part 1 : UITabBarController add a tab
 ```
 (lldb) po [[UIWindow keyWindow] rootViewController]
 <UITabBarController: 0x7fdf0f036000>
@@ -83,19 +82,58 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 
 // Create mutable array
 (lldb) e NSMutableArray *$listofvcontrollers = (NSMutableArray *)[$tbc viewControllers]
+
+// Add and Delete and View Controller from the array
 (lldb) po [$listofvcontrollers addObject:$sithvc]
+(lldb) po [$listofvcontrollers removeObjectAtIndex:0]
+
+// Print the array
 (lldb) po $listofvcontrollers
-<__NSArrayM 0x600001ce1ec0>(
-<tinyDormant.YDJediVC: 0x7fd88740a8b0>,
-<tinyDormant.YDMandalorianVC: 0x7fd889c02a10>,
-<tinyDormant.YDSithVC: 0x7fd8875125b0>
+<__NSArrayM 0x600001c32580>(
+<tinyDormant.YDMandalorianVC: 0x7fa476e15c40>,
+<tinyDormant.YDSithVC: 0x7fa476d033d0>
 )
 
 (lldb) po [$tbc setViewControllers:$listofvcontrollers]
  nil
-
-(lldb) continue
 ```
+#### Part 2 : UITabBarController beautify
+```
+ (lldb) search UITabBar
+ <UITabBar: 0x7fa476e16be0; frame = (0 618; 375 49); autoresize = W+TM; gestureRecognizers = <NSArray: 0x60000082b690>; layer = <CALayer: 0x600000678b40>>
+
+ (lldb) e id $tabs = (id)0x7fa476e16be0
+
+ (lldb) po [$tabs items]
+ <__NSArrayI 0x600000826580>(
+ <UITabBarItem: 0x7fae2f6164c0>,
+ <UITabBarItem: 0x7fae2f6195a0>,
+ <UITabBarItem: 0x7fae2f502380> selected
+ )
+
+ (lldb) e int $sithIndex = [$listofvcontrollers indexOfObject:$sithvc]
+ (lldb) po $sithIndex
+ 2
+
+ (lldb) po [[[$tabs items] objectAtIndex:$sithIndex] setBadgeValue:@"99"];
+
+ (lldb) e UIImage *$sithimage = [UIImage imageNamed:@"approval"];
+ (lldb) e [[[$tabs items] objectAtIndex:$sithIndex] setImage:$sithimage]
+  nil
+ (lldb) caflush
+```
+#### Part 3 : UITabBarController add tint color
+```
+(lldb) po [$tabs barTintColor]
+ nil
+ (lldb) e (void)[$tabs setBarTintColor: [UIColor lightGrayColor]]
+0x0000000108ea9e30
+
+(lldb) caflush
+
+(lldb) e (void)[$tabs setBarTintColor: [UIColor greenColor]]
+(lldb) caflush
+ ```
 #### Push a new ViewController
 ```
 (lldb) po [[UIWindow keyWindow] rootViewController]
@@ -109,7 +147,7 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 (lldb) po $vc
 <UIViewController: 0x1067116e0>
 
-(lldb) expression (void)[$rootvc pushViewController:$vc animated:YES]
+(lldb) e (void)[$rootvc pushViewController:$vc animated:YES]
 (lldb) caflush
 ```
 
