@@ -10,6 +10,11 @@
 // This works on a stripped, release app...
 (lldb) lookup -X (?i)address -m my_app
 ```
+#### Custom prompt
+```
+// instead of the vanilla (lldb)
+settings set prompt \-\>
+```
 #### lldb iOS Simulators
 Avoid using xCode if you are using the Python Debugger
 - Kill xcode
