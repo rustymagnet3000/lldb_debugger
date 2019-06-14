@@ -64,8 +64,8 @@ I wanted to stop at the start of a function call and inspect the parameters pass
 ### 14. Inspect 3rd party SDK
 This was lots of fun. 🦂.
 
-### 15. Scripting
-A script to see who called the C API `getenv` in a running iOS app.
+### 15. Scripting with LLDB
+Python scripts to automate debugging.
 
 ### 16. Setup macOS for debugging
 You need to turn off `Rootless` [ temporarily, at least ] if you want to debug anything interesting.
@@ -83,5 +83,8 @@ I wrote a C program that ran multiple threads.  These threads were not tied toge
 Due to no **Input Validation** or **Overflow Protection** - we overwrote the `instruction pointer` to a function of our choice.  Getting this to work on a Mac was hard.  By default `Clang` added safety flags.  You had to turn them off.
 
 ### 20. Crash logs (resymbolicate)
-Release apps are `stripped` of debug symbols for a number of reasons.  These include size and protection against Reverse Engineers.  That makes finding the root cause of a crash harder.  You are required to build the app with debug symbols (a `dsym` file) and then glue this together with your crash log.  
+Release apps are `stripped` of debug symbols for a number of reasons.  These include size and protection against Reverse Engineers.  That makes finding the root cause of a crash harder.  You are required to build the app with debug symbols (a `dsym` file) and then glue this together with your crash log.
+
+### 21. Scripting with LLDB
+A script to see who called the C API `getenv` in a running iOS app.
 ```
