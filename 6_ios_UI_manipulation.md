@@ -134,6 +134,13 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 (lldb) e (void)[$tabs setBarTintColor: [UIColor greenColor]]
 (lldb) caflush
  ```
+#### Part 3 : UINavigationBar add Right-Sided Button
+```
+(lldb) search UINavigationBar
+(lldb) e id $nc = (id)0x113d960e0
+(lldb) po [$nc setBarTintColor: [UIColor greenColor]]
+(lldb) caflush
+```
 #### Push a new ViewController
 ```
 (lldb) po [[UIWindow keyWindow] rootViewController]
@@ -148,6 +155,78 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 <UIViewController: 0x1067116e0>
 
 (lldb) e (void)[$rootvc pushViewController:$vc animated:YES]
+(lldb) caflush
+```
+#### Advanced : Wiring a more complicated U.I.
+ - [ ] Find a UITabBarController in memory
+ - [ ] Create a new UINavigationController
+ - [ ] Create a new UIViewController
+ - [ ] Connect the UIViewController to the UINavigationController
+ - [ ] Create a new array of UINavigationControllers
+ - [ ] Check the View Hierarchy to ensure it is wired correctly
+
+```
+ (lldb) search UITabBarController
+ <UITabBarController: 0x7fa3b0029600>
+
+ (lldb) search UINavigationController
+ <UINavigationController: 0x7fa3b0813600>
+
+ (lldb) po id $nc = [[UINavigationController alloc] initWithRootViewController:$sithvc]
+ (lldb) po $nc
+ <UINavigationController: 0x7fa3af80a000>
+
+ (lldb) search UINavigationController
+ <UINavigationController: 0x7fa3af81a200>
+
+ <UINavigationController: 0x7fa3b0813600>
+
+ (lldb) po [$nc2 viewControllers]
+ <__NSSingleObjectArrayI 0x600002005570>(
+ <tinyDormant.YDSithVC: 0x7fa3af704430>
+ )
+
+ (lldb) e Class $sithVcClass = (Class) objc_getClass("tinyDormant.YDSithVC")
+ (lldb) e id $sithvc = (id)[$sithVcClass new]
+ (lldb) po $sithvc
+ <tinyDormant.YDSithVC: 0x7fa3af704430>
+
+// NOW I NEED TO ADD IT...
+
+ (lldb) po [[UIWindow keyWindow] rootViewController]
+<UITabBarController: 0x7fa3b0029600>
+
+(lldb) e id $tbc = (id)0x7fa3b0029600
+(lldb) po $tbc
+<UITabBarController: 0x7fa3b0029600>
+
+(lldb) e NSMutableArray *$listofvcontrollers = (NSMutableArray *)[$tbc viewControllers]
+
+(lldb) po $listofvcontrollers
+ <__NSArrayM 0x600002cb89f0>(
+ <tinyDormant.YDJediVC: 0x7fa3af727240>,
+ <UINavigationController: 0x7fa3b0813600>
+ )
+
+(lldb) po [$listofvcontrollers addObject:$nc]
+
+ (lldb) po $listofvcontrollers
+<__NSArrayM 0x600002cb89f0>(
+<tinyDormant.YDJediVC: 0x7fa3af727240>,
+<UINavigationController: 0x7fa3b0813600>,
+<UINavigationController: 0x7fa3af80a000>
+)
+
+(lldb) po [$tbc setViewControllers:$listofvcontrollers]
+
+(lldb) search UITabBar
+<UITabBar: 0x7fa476e16be0; frame = (0 618; 375 49); autoresize = W+TM; gestureRecognizers = <NSArray: 0x60000082b690>; layer = <CALayer: 0x600000678b40>>
+
+(lldb) e id $tabs = (id)0x7fa476e16be0
+(lldb) e UIImage *$sithimage = [UIImage imageNamed:@"UIBarButtonSystemItemFastForward"]
+(lldb) e (void)[[[$tabs items] objectAtIndex:$sithIndex] setImage:$sithimage]
+ nil
+
 (lldb) caflush
 ```
 
