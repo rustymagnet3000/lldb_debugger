@@ -1,8 +1,10 @@
 # Heap Overflow level 1
 ## Summary
-This write-up mimics what liveOverflow showed in his great [video][295b9bea]. The difference is this article was written for `macOS`.  
+This write-up mimics what `LiveOverflow` showed in his great [video][295b9bea]. This article differs from the video as it was written for `macOS` and had to overcome issues with `Clang` (the Apple Compiler) and `lldb` ( the Apple Debugger ).
 
-I passed a specially crafted `String` into a vulnerable program to demonstrate a `Heap Overflow`.  The target was a piece of C code was from `Protostar Heap Overflow level 1` challenge.  This entire attack leverages the design of the `strcpy` API.  If you type in `man strcpy` into your macOS `Terminal` window you can read this:
+A specially crafted `String` was passed into a vulnerable program to demonstrate a `Heap Overflow`.  The original C code was from `Protostar Heap Overflow level 1` challenge.  This entire attack leverages the design of the `strcpy` API.  By default, Apple's compiler of choice auto substituted `strcpy` out of the code with a safer alternative.  With a few flags, we turn off that auto substitution to allow the Overflows.
+
+If you type in `man strcpy` into your macOS `Terminal` window you can read this:
 
 > SECURITY CONSIDERATIONS
      > The strcpy() function is easily misused in a manner which enables malicious users to arbitrarily change a running program's functionality

@@ -6,14 +6,14 @@
 import lldb
 
 def __lldb_init_module(debugger, internal_dict):
-    print "[+] Rusty's lldb commands. June 2019 update."
+    print("[+] Rusty's python-lldb commands. Oct 2019 updated.")
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloSmoke yd_hello_smoke')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_whereamI')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDChip yd_chip')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFrame yd_frame_print')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDGetBundleIdentifier yd_bundle_id')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDThreadBeauty yd_thread_list')
-    print "[+] Finished adding Rusty\'s commands."
+    print("[+] Finished adding Rusty\'s python-lldb commands.")
 
 
 def getRegisterString(target):
@@ -43,7 +43,7 @@ def YDWhere(debugger, command, result, internal_dict):
     """
     name = lldb.frame.GetFunctionName()
     if not lldb.frame.IsValid():
-        return "no frame here"
+        return ("no frame here")
     else:
         print("[+] Inside function: " + str(name))
         print("[+] line: " + str(lldb.frame.GetLineEntry().GetLine()))
@@ -77,7 +77,7 @@ def YDPrintFrame(debugger, command, result, internal_dict):
 
     for frame in thread:
         if not frame.IsValid():
-            print "no frame here"
+            print ("no frame here")
         else:
             print >>result, str(frame)
 

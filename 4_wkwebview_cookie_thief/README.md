@@ -3,7 +3,7 @@ Once I opened a WKWebView rendered page inside an iOS app, I wanted to use lldb 
 ```
 webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
             for cookie in cookies {
-                print("\(cookie.name) is set to \(cookie.value)") != ()
+                print("\(cookie.name) is set to \(cookie.value)")
             }
         }
 ```
