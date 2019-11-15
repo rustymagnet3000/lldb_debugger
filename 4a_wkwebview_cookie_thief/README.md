@@ -1,5 +1,12 @@
 # 🍪 WKWebView Cookie Thief 🍪
-I wanted to use lldb to print all cookies inside a WKWebView cookie store. I wanted my debugger to mimic the following code:
+Use a debugger (`lldb`) to print all cookies inside a WKWebView cookie store.
+
+
+![success](/4a_wkwebview_cookie_thief/b_cookie_thief.png)
+
+
+## A Swift Cookie Thief
+The debugger could mimic the following code:
 ```
 webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
             for cookie in cookies {
@@ -7,7 +14,7 @@ webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies i
             }
         }
 ```
-#### A Swift Cookie Thief
+
 Find the `WKHTTPCookieStore` object on the `Heap`.
 ```
 (lldb) settings set target.language swift
@@ -33,20 +40,10 @@ Find the `WKHTTPCookieStore` object on the `Heap`.
 	sameSite:none
 	path:/
 	isSecure:FALSE
- path:"/" isSecure:FALSE>, <NSHTTPCookie
-	version:1
-	name:s_vi
-	value:[CS]v1|2DFA9449052E39D6-60002D4B40001F9C[CE]
-	expiresDate:'2020-11-20 10:26:50 +0000'
-	created:'2018-11-21 10:26:50 +0000'
-	sessionOnly:FALSE
-	domain:.apple.com
-	partition:none
-	sameSite:none
-	path:/
-	isSecure:FALSE
- path:"/" isSecure:FALSE>, <NSHTTPCookie
-	version:1
+ path:"/" isSecure:FALSE>
+ ...
+ ..
+ ..
 ```
 #### Warning
 This works on a physical iOS device.  But you don't see anything?  
@@ -69,7 +66,7 @@ Enter expressions, then terminate with an empty line to evaluate:
 (lldb) exp $printSomething(a: $p)
 <WKHTTPCookieStore: 0x2803db2c0>
 ```
-#### An Objective-C Cookie Thief
+## An Objective-C Cookie Thief
 Using an Objective-C `Block` was even nicer.
 ```
 search WKHTTPCookieStore
