@@ -30,3 +30,11 @@ ps -ax | grep -i WebKit.Networking
  (lldb) b +[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]
  ```
 Bingo.  First time!
+#### Easier ways to find Cookies
+In Safari inspector you can view the Cookies from WKWebView's Cookie store, when you have enabled `Developer` mode in Safari and you have enabled the setting on your iOS device.
+
+![](/4b_NSHTTPCookie_thief/safari_cookie_inspector.png)
+
+All you need to access this code is:
+
+![settings](/4b_NSHTTPCookie_thief/setting.PNG)
