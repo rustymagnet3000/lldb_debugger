@@ -6,7 +6,6 @@
 import lldb
 
 def __lldb_init_module(debugger, internal_dict):
-    print("[+] Rusty's python-lldb commands. Oct 2019 updated.")
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloSmoke yd_hello_smoke')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_whereamI')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDChip yd_chip')
