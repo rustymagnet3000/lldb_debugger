@@ -1,5 +1,5 @@
 # lldb - C playground
-#### Warm-up
+#### Warm-up - malloc / strcpy
 Create a malloc char array, copy with strcpy, and free.
 
 ```
@@ -8,6 +8,18 @@ Create a malloc char array, copy with strcpy, and free.
 (lldb) e $str[1] = 'o'
 (lldb) p $str
 (char *) $str = 0x00000001c0010460 "monkeys"
+```
+#### Warm-up - getenv
+```
+(lldb) e const char *$home = NULL
+(lldb) p *$home
+error: Couldn't apply expression side effects : Couldn't dematerialize a result variable: couldn't read its memory
+(lldb) e $home = getenv("HOME")
+(const char *) $3 = 0x00007ffeefbff8d2 "/Users/foobar"
+(lldb) po $home
+"/Users/foobar"
+(lldb) p $home
+(const char *) $home = 0x00007ffeefbff8d2 "/Users/foobar"
 ```
 #### Find
 (lldb) section
@@ -118,4 +130,3 @@ OTHER_CFLAGS = -fno-stack-protector
 This gist is inspired by a great article:
 
 https://www.objc.io/issues/19-debugging/lldb-debugging/
-

@@ -31,7 +31,7 @@ ps -ax | grep -i WebKit.Networking
  ```
 Bingo.  First time!
 #### Easier ways to find Cookies
-In Safari inspector you can view the Cookies from WKWebView's Cookie store, when you have enabled `Developer` mode in Safari and you have enabled the setting on your iOS device.
+In Safari inspector you can view the Cookies inside a WKWebView Cookie store.  You enable `Developer` mode in Safari and the following setting on your iOS device.
 
 ![](/4b_NSHTTPCookie_thief/safari_cookie_inspector.png)
 
