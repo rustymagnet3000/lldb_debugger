@@ -1,6 +1,9 @@
 ## Using Python to write LLDB scripts
 ### Warm-up
 ```
+// Great auto-continue breakpoint to print which method is executing
+script print (lldb.frame)
+
 (lldb) script lldb.target
 <lldb.SBTarget; proxy of <Swig Object of type 'lldb::SBTarget *' at 0x14867a360> >
 
@@ -70,7 +73,7 @@ tinyDormant.YDJediVC.viewDidLoad() -> ()
 ```
 ### Instantiate and read a Swift Class
 ```
-(lldb) script 
+(lldb) script
 >>> options = lldb.SBExpressionOptions()
 >>> options.SetLanguage(lldb.eLanguageTypeSwift)
 >>> options.SetCoerceResultToId()
