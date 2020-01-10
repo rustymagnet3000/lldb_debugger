@@ -4,6 +4,7 @@
 https://github.com/AnasAboureada/Penetration-Testing-Study-Notes/blob/master/cheatSheets/Cheatsheet_GDB.txt
 https://www.exploit-db.com/papers/13205
 https://sourceware.org/gdb/onlinedocs/gdb/Symbols.html
+https://darkdust.net/files/GDB%20Cheat%20Sheet.pdf
 ```
 #### Set and Print Variable
 ```
@@ -88,6 +89,10 @@ Set environment variables
 (gdb) set env PATH=`perl -e 'print "A" x 65'`
 
 ```
+#### Shared Libraries
+```
+info sharedlibrary
+```
 #### Locations of system calls
 ```
 gef> x/x strcpy
@@ -143,6 +148,11 @@ $11 = 84
 ```
 #### GEF commands
 ```
+gef> shellcode search linux arm
+gef> shellcode get 698
+[+] Downloading shellcode id=698
+[+] Shellcode written to '/tmp/sc-fd1r2cvr.txt'
+
 gef> vmmap
 Start      End        Offset     Perm Path
 0x00010000 0x00011000 0x00000000 r-x /opt/phoenix/arm/stack-four
@@ -173,6 +183,12 @@ Permissions: rwx
 Pathname: [stack]
 Offset (from page): 0x0
 Inode: 0
+```
+#### Shell
+```
+gef> shell
+$ <shell command>
+$ exit
 ```
 #### Cool commands
 ```
