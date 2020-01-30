@@ -25,6 +25,12 @@ $4 = {0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x0}
 (gdb) p $bar
 $5 = "hello"
 ```
+#### Breakpoints and Stepping
+```
+gef> b *start_level
+gef> b *start_level + 24
+gef> nexti 3     /* run next 3 instructions */
+```
 #### Malloc
 ```
 gef> p (int)malloc(6)
@@ -39,19 +45,15 @@ Useful when trying to overfill a buffer with `gets` / `strcpy` or an `environmen
 ```
 // Bash
 $ python -c 'print "A"*(80) + "\x44\x05\x01\x00"' | ./stack-four
+$ cat ~/128chars | ./stack-five
 
 // inside gdb
 gef> r <<< AAAA
-
+gef> r < ~/payload        <- read in file ( for gets() )
 gef> r <<< $(python -c 'print "A"*80 + "\x44\x05\x01\x00"')
-
-// gdb run and read from bytes from file
-python -c 'print "A"*64' > ~/64_bytes
-gdb myapp
-break *start_level+46
-r < ~/64_bytes
-
+(gdb) run $(python -c 'print "\x90" * 132 + "\xff\xfe\xfd\x98"')
 ```
+
 #### Sections
 ```
 Display executable sections
@@ -120,15 +122,18 @@ gef> x/s *((char **)environ)
 ```
 #### Read Memory
 ```
+
+gef> x/100wx $sp-200     // check overflowed Stack
+
 gef> x/24x $sp          // read hex address from Stack pointer
 
-gef> x/2w $sp
+gef> x/2w $sp        <--- print from stack pointer
 0xfffefd00:	0xfffefd84	0x00000001	0x00000011	0xf77f0288
 
-gef> x/wx 0xfffefd84
+gef> x/wx 0xfffefd84        <--- print memory address
 0xfffefd84:	0xfffefe8e
 
-gef> x/s 0xfffefe8e
+gef> x/s 0xfffefe8e         <-- string
 0xfffefe8e:	"/opt/phoenix/arm/stack-two"
 
 gef> find $sp, +96,0x000105bc           // find Return address on Stack

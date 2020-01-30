@@ -1,5 +1,5 @@
 # 🍪 NSHTTPCookie Thief 🍪
-#### Debug App on Simulator without xCode
+##### Debug App on Simulator without xCode
 ```
 xcrun --sdk iphonesimulator lldb --attach-name tinyDormant --wait-for
 
@@ -11,27 +11,51 @@ xcrun --sdk iphonesimulator lldb --attach-name tinyDormant --wait-for
 (lldb) search WKHTTPCookieStore
 <WKHTTPCookieStore: 0x600001f5d300>
 ```
-#### Search with Debugger for Cookie setter
+##### Search with Debugger for Cookie setter
 ```
 (lldb) image lookup -n "+[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]"
 (lldb) image lookup -rn cookiesWithResponseHeaderFields
 ```
-#### Why are no Addresses found?
-The addresses are there but they are inside the `WebKit` module.
+##### Why are no Breakpoints or Traces firing?
+```
+(lldb) b +[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]
+
+frida-trace -m "*[NSHTTPCookie initWithProperties:]" -p $mypid
+```
+Read this:
 https://webkit.org/debugging-webkit/
+
+Your app process doesn't see the calls to `NSHTTPCookie` as they are being made inside a child process.
 
 ![webkit_processes](/4b_NSHTTPCookie_thief/webkit_overview.png)
 
-#### Switch debugger to WebKit process
+### Find the Cookies
+##### Stop WKWebView loading
+Breakpoint after WKWebView instantiated or before:
 ```
-ps -ax | grep -i WebKit.Networking
- 2170 ??         0:00.27 /System/Library/Frameworks/WebKit.framework/XPCServices/com.apple.WebKit.Networking.xpc/com.apple.WebKit.Networking
+self.webView.load(myRequest)
+```
+##### Get the correct Child Process ID
+After WKWebView has instantiated the `Child` webkit processes have spawned.
 
- (lldb) b +[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]
- ```
+```
+mypid=$(ps -ax | grep -i WebKit.WebContent | grep -i Xcode | awk '{print $1}')
+
+echo $mypid
+1761
+
+```
+##### Set the Trace
+```
+frida-trace -m "*[NSHTTPCookie initWithProperties:]" -p 229
+```
+##### Continue Debugger
+Now `continue` the main app process.
+
 Bingo.  First time!
-#### Easier ways to find Cookies
-In Safari inspector you can view the Cookies inside a WKWebView Cookie store.  You enable `Developer` mode in Safari and the following setting on your iOS device.
+
+### Easier ways to find Cookies
+In Safari inspector - with a debuggable iOS app - you can view the Cookies inside a WKWebView Cookie store.  You enable `Developer` mode in Safari and the following setting on your iOS device.
 
 ![](/4b_NSHTTPCookie_thief/safari_cookie_inspector.png)
 
