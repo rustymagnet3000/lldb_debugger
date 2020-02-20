@@ -5,9 +5,7 @@ Area | Tip
 --|--
 auto-analysis |  Select `Decompiler Parameter ID`
 Merge Windows |  Drag the Titlebar of a Window into another
-Seek address  |  (see below)
-
-![navigate_to_address](images/navigate-to-address.png)
+Seek address  |  `/Navigation/Go To`
 
 
 ##### Export and Code Sign
