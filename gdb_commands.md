@@ -6,6 +6,10 @@ https://www.exploit-db.com/papers/13205
 https://sourceware.org/gdb/onlinedocs/gdb/Symbols.html
 https://darkdust.net/files/GDB%20Cheat%20Sheet.pdf
 ```
+#### Setup gdb + gef
+```
+https://gef.readthedocs.io/en/master/#setup
+```
 #### Set and Print Variable
 ```
 (gdb) set $foo = 3
@@ -29,6 +33,10 @@ $5 = "hello"
 ```
 gef> b *start_level
 gef> b *start_level + 24
+gef➤ b atoi
+gef➤ b _ZN8password11checkLengthEi
+gef➤ info breakpoints
+gef➤ delete breakpoints
 gef> nexti 3     /* run next 3 instructions */
 ```
 #### Malloc
@@ -65,10 +73,14 @@ Exec file:
     0x08048128->0x080482c4 at 0x00000128: .hash ALLOC LOAD READONLY DATA HAS_CONTENTS
     0x080482c4->0x080486c4 at 0x000002c4: .dynsym ALLOC LOAD READONLY DATA HAS_CONTENTS
 ```
-#### Essentials
+#### Disassemble
 ```
-disas start_level
-
+(gdb) disassemble main
+(gdb) disas start_level
+(gdb) set disassembly-flavor intel
+```
+#### Where am I?
+```
 gef> where            
 #0  0x0001058c in start_level ()
 #1  0x41414140 in ?? ()
@@ -89,7 +101,6 @@ type = char [6]
 
 Set environment variables
 (gdb) set env PATH=`perl -e 'print "A" x 65'`
-
 ```
 #### Shared Libraries
 ```
@@ -120,9 +131,12 @@ gef> set env FooBarEnvVariables=`perl -e 'print "A" x 65'`
 gef> x/s *((char **)environ)
 0xfffefed4:	"LS_COLORS="
 ```
-#### Read Memory
+#### Registers
 ```
-
+info registers
+```
+#### Memory
+```
 gef> x/100wx $sp-200     // check overflowed Stack
 
 gef> x/24x $sp          // read hex address from Stack pointer
@@ -199,6 +213,9 @@ $ exit
 ```
 Follow process forking
 (gdb) set follow-fork-mode {parent, child, ask}
+
+$) gdb version
+GNU gdb (Ubuntu 8.1-0ubuntu3) 8.1.0.20180409-git
 ```
 #### Setup on macOS
 ```

@@ -3,10 +3,13 @@
 
 Area | Tip  
 --|--
+Auto-Analyze |  Double click on the Imported File to start `Auto-Analyze`
 auto-analysis |  Select `Decompiler Parameter ID`
 Merge Windows |  Drag the Titlebar of a Window into another
 Seek address  |  `/Navigation/Go To`
-
+Function Graph	|	Zoom in with Double click on Title Bar
+Symbol Tree	|	Filter for Global Var and right-click on Label `Show References To`
+Hex -> Decimal	|	Leave mouse cursor over a hex value and it display a pop-up of the Decimal value |  
 
 ##### Export and Code Sign
 After applying any patch, select `File` and `Export Program`. Do NOT select the `Export Tool` option.
