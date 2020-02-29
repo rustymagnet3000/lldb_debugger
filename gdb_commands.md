@@ -5,6 +5,7 @@ https://github.com/AnasAboureada/Penetration-Testing-Study-Notes/blob/master/che
 https://www.exploit-db.com/papers/13205
 https://sourceware.org/gdb/onlinedocs/gdb/Symbols.html
 https://darkdust.net/files/GDB%20Cheat%20Sheet.pdf
+https://blogs.oracle.com/linux/8-gdb-tricks-you-should-know-v2
 ```
 #### Setup gdb + gef
 ```
@@ -16,6 +17,7 @@ set $foo = 3
 set $str = "hello world"
 set disassembly-flavor intel
 set environment LD_PRELOAD=./mylib.so
+set env PATH=`perl -e 'print "A" x 65'`
 
 show environment
 show environment PATH
@@ -46,7 +48,11 @@ $4 = {0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x0}
 (gdb) p $bar
 $5 = "hello"
 ```
-#### Breakpoints and Stepping
+#### Stepping
+```
+nexti 3     /* run next 3 instructions */
+```
+#### Breakpoints
 ```
 b *start_level
 b *start_level + 24
@@ -66,9 +72,45 @@ End with a line saying just "end".
 >print "fluffy foobar"
 >end
 
-gef➤ info breakpoints
-gef➤ delete breakpoints
-gef> nexti 3     /* run next 3 instructions */
+info breakpoints
+delete breakpoints
+delete breakpoints 1-8
+```
+#### Disassemble
+```
+(gdb) disassemble main
+(gdb) disas start_level
+```
+#### eXamine
+```
+x/24wx $esp
+
+//  Instruction
+x/i $pc
+=> 0x105fc <main+32>:	bl	0x10454 <getenv@plt>
+
+x/2i $pc
+=> 0x105fc <main+32>:	bl	0x10454 <getenv@plt>
+   0x10600 <main+36>:	str	r0, [r11, #-8]
+
+where            
+   #0  0x0001058c in start_level ()
+   #1  0x41414140 in ?? ()
+````
+#### Loop
+```
+set $loop = 5
+while $loop > 0
+ >output "$loop is "
+ >output $loop
+ >echo \n
+ >set $loop = $loop - 1
+ >end
+"$loop is "0x5
+"$loop is "0x4
+"$loop is "0x3
+"$loop is "0x2
+"$loop is "0x1
 ```
 #### Malloc
 ```
@@ -104,33 +146,14 @@ Exec file:
     0x08048128->0x080482c4 at 0x00000128: .hash ALLOC LOAD READONLY DATA HAS_CONTENTS
     0x080482c4->0x080486c4 at 0x000002c4: .dynsym ALLOC LOAD READONLY DATA HAS_CONTENTS
 ```
-#### Disassemble
+#### whatis
 ```
-(gdb) disassemble main
-(gdb) disas start_level
-```
-#### Where am I?
-```
-gef> where            
-#0  0x0001058c in start_level ()
-#1  0x41414140 in ?? ()
-
-//  Instruction
-gef> x/i $pc
-=> 0x105fc <main+32>:	bl	0x10454 <getenv@plt>
-
-gef> x/2i $pc
-=> 0x105fc <main+32>:	bl	0x10454 <getenv@plt>
-   0x10600 <main+36>:	str	r0, [r11, #-8]
-
 gef> whatis 0x000106d8
 type = int
 
 gef> whatis "hello"
 type = char [6]
 
-Set environment variables
-(gdb) set env PATH=`perl -e 'print "A" x 65'`
 ```
 #### Shared Libraries
 ```
