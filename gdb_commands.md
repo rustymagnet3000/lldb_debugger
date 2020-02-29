@@ -10,15 +10,32 @@ https://darkdust.net/files/GDB%20Cheat%20Sheet.pdf
 ```
 https://gef.readthedocs.io/en/master/#setup
 ```
-#### Set and Print Variable
+#### Set and Show Variable
 ```
-(gdb) set $foo = 3
+set $foo = 3
+set $str = "hello world"
+set disassembly-flavor intel
+set environment LD_PRELOAD=./mylib.so
+
+show environment
+show environment PATH
+```
+#### Print
+```
+gef➤  print "foobar"
+$1 = "foobar"
+
+gef➤  print $1
+$2 = "foobar"
 
 (gdb) p/x $foo
 $1 = 0x3
 
 (gdb) p $foo
 $2 = 3
+
+(gdb) p 5+5
+$5 = 0xa
 
 (gdb) p $bar = "hello"
 $3 = "hello"
@@ -31,10 +48,24 @@ $5 = "hello"
 ```
 #### Breakpoints and Stepping
 ```
-gef> b *start_level
-gef> b *start_level + 24
-gef➤ b atoi
-gef➤ b _ZN8password11checkLengthEi
+b *start_level
+b *start_level + 24
+b atoi
+b _ZN8password11checkLengthEi
+
+// break if Register ( Second Argument: RSI ) set to 6
+break if $rsi == 6
+
+// break if
+break passwordcheck if 0 == 0
+
+// Run debugger commands on Breakpoint 1
+command 1
+Type commands for breakpoint(s) 1, one per line.
+End with a line saying just "end".
+>print "fluffy foobar"
+>end
+
 gef➤ info breakpoints
 gef➤ delete breakpoints
 gef> nexti 3     /* run next 3 instructions */
@@ -49,7 +80,7 @@ $7 = 0xb7ffd020
 (gdb) ptype /o struct locals
 ```
 #### Buffer filling
-Useful when trying to overfill a buffer with `gets` / `strcpy` or an `environment variable``
+Useful when trying to overfill a buffer with `gets` / `strcpy` or an `environment variable`
 ```
 // Bash
 $ python -c 'print "A"*(80) + "\x44\x05\x01\x00"' | ./stack-four
@@ -77,7 +108,6 @@ Exec file:
 ```
 (gdb) disassemble main
 (gdb) disas start_level
-(gdb) set disassembly-flavor intel
 ```
 #### Where am I?
 ```
