@@ -4,7 +4,7 @@
 Area | Tip  
 --|--
 Auto-Analyze |  Double click on the Imported File to start `Auto-Analyze`
-auto-analysis |  Select `Decompiler Parameter ID`
+Auto-Analyze |  Select `Decompiler Parameter ID`
 Merge Windows |  Drag the Titlebar of a Window into another
 Seek address  |  `/Navigation/Go To`
 Function Graph	|	Zoom in with Double click on Title Bar
