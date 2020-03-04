@@ -39,6 +39,15 @@ $2 = 3
 (gdb) p 5+5
 $5 = 0xa
 
+gef➤  x/s $esp
+0xffffd570:	"AAAA"
+
+gef➤  p $esp
+$1 = (void *) 0xffffd570
+
+gef➤  p (char *) $esp
+$2 = 0xffffd570 "AAAA"
+
 (gdb) p $bar = "hello"
 $3 = "hello"
 
@@ -51,6 +60,8 @@ $5 = "hello"
 #### Stepping
 ```
 nexti 3     /* run next 3 instructions */
+
+finish      /* continue execution of current function and then stop */
 ```
 #### Breakpoints
 ```
@@ -60,7 +71,7 @@ b atoi
 b _ZN8password11checkLengthEi
 
 // break if Register ( Second Argument: RSI ) set to 6
-break if $rsi == 6
+break if $rsi = 0x38
 
 // break if
 break passwordcheck if 0 == 0
@@ -131,6 +142,7 @@ $ cat ~/128chars | ./stack-five
 // inside gdb
 gef> r <<< AAAA
 gef> r < ~/payload        <- read in file ( for gets() )
+run <<< $(python3 -c 'print ("\x41" * 40)'    // scanf on a machine with only python3
 gef> r <<< $(python -c 'print "A"*80 + "\x44\x05\x01\x00"')
 (gdb) run $(python -c 'print "\x90" * 132 + "\xff\xfe\xfd\x98"')
 ```
@@ -186,6 +198,7 @@ gef> x/s *((char **)environ)
 ```
 #### Registers
 ```
+reg
 info registers
 ```
 #### Memory
@@ -258,6 +271,8 @@ Inode: 0
 ```
 #### Shell
 ```
+gef> shell ls
+
 gef> shell
 $ <shell command>
 $ exit
