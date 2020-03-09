@@ -39,6 +39,12 @@ $2 = 3
 (gdb) p 5+5
 $5 = 0xa
 
+p/d 0xffffd59c - 0xffffd560
+$35 = 60
+
+p/tz $eip             // print leading zeroes
+$4 = 0x08049201
+
 gef➤  x/s $esp
 0xffffd570:	"AAAA"
 
@@ -142,11 +148,13 @@ $ cat ~/128chars | ./stack-five
 // inside gdb
 gef> r <<< AAAA
 gef> r < ~/payload        <- read in file ( for gets() )
-run <<< $(python3 -c 'print ("\x41" * 40)'    // scanf on a machine with only python3
+run <<< $(python -c 'print "\x41" * 44 + "\x82\x91\x04\x08"')    // scanf
 gef> r <<< $(python -c 'print "A"*80 + "\x44\x05\x01\x00"')
 (gdb) run $(python -c 'print "\x90" * 132 + "\xff\xfe\xfd\x98"')
 ```
+The above may not work with Python 3, when you hit a non-readable ASCII character. Reference [here][ba369178].
 
+  [ba369178]: https://stackoverflow.com/questions/42884251/why-is-the-output-of-print-in-python2-and-python3-different-with-the-same-string "python_2_and_3_byte_differences"
 #### Sections
 ```
 Display executable sections
@@ -162,6 +170,8 @@ Exec file:
 ```
 gef> whatis 0x000106d8
 type = int
+
+  [961d8f92]: https://stackoverflow.com/questions/42884251/why-is-the-output-of-print-in-python2-and-python3-different-with-the-same-string "python3_byte_str"
 
 gef> whatis "hello"
 type = char [6]
