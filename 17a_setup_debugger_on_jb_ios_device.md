@@ -14,7 +14,7 @@
 Electra shipped with a `debug-server`. Previous jailbreaks had lots of manual steps to get the correct `debug-server` onto the device.
 ![electra](images/2019/06/IMG_0069.png)
 ##### Electra specifics
-When you selects `tweaks`, Electra runs the `debug-server` from a different path:
+When you select `Tweaks`, Electra runs the `debug-server` from a different path:
 ```
 // Tweaks enabled
 /Developer/usr/bin/debugserver localhost:6666 -a 794
