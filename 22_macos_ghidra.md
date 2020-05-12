@@ -91,8 +91,6 @@ rdi = 173
 (lldb) bt
 * thread #2, queue = 'com.apple.root.default-qos', stop reason = breakpoint 1.3
   * frame #0: 0x00007fff5cff667c libsystem_c.dylib` exit
-    frame #1: 0x00000001004a6c54 Sketch` ___lldb_unnamed_symbol21578$$Sketch  + 52
-    frame #2: 0x00000001004a189b Sketch` ___lldb_unnamed_symbol21476$$Sketch  + 699
 ```
 
 

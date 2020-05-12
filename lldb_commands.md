@@ -7,8 +7,12 @@
 `image dump sections myApp`
 ##### Symbols of a Module
 `image dump symtab myApp`
-##### Symbols of all loaded code
+##### Symbols of all loaded code (BAD IDEA)
 `image dump symtab`
+##### Looks for a Debug Symbol
+`(lldb)image lookup -r -n YDClass`
+##### Looks for non-debug symbols:
+`(lldb)image lookup -r -s YDClass`
 ##### Print text
 ```
 (lldb) script print "Hello"
