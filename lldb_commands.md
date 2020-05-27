@@ -1,4 +1,6 @@
 # LLDB Commands
+## Great cheat sheets
+https://gist.github.com/alanzeino/82713016fd6229ea43a8
 ##### Brief list of attached Libraries
 `image list -b`
 ##### Sections of all loaded code
@@ -39,7 +41,9 @@ Usage: `po $arg2`
 ##### List
 `b list`
 ##### Breakpoint on Selector
-`b URLSession:didReceiveChallenge:completionHandler:`
+`breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:`
+##### Breakpoint on Selector in Module
+`breakpoint set --selector URLSession:didReceiveChallenge:completionHandler: -s playModule`
 ##### Break on exact ObjC Method
 `b "-[MyUser name:]"`
 ##### Breakpoint on completionHandler
