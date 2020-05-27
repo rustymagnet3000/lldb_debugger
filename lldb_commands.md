@@ -10,32 +10,43 @@
 ##### Symbols of all loaded code (BAD IDEA)
 `image dump symtab`
 ##### Looks for a Debug Symbol
-`(lldb)image lookup -r -n YDClass`
+`image lookup -r -n YDClass`
 ##### Looks for non-debug symbols:
-`(lldb)image lookup -r -s YDClass`
+`image lookup -r -s YDClass`
 ##### Print text
-```
-(lldb) script print "Hello"
-Hello
-```
-##### Breakpoints
-```
-// delete all breakpoints
-breakpoint delete
+`script print "Hello"`
+##### Registers (x86_64)
+Argument  | Register | Alias  
+--|---|--
+Return  | RAX  | $rax
+First  | RDI  | $arg1
+Second  | RSI  | $arg2
+Third  |  RDX |  $arg3
+Fourth  | RCX  | $arg4  
+Fifth  | R8  |  $arg5
+Sixth  | R9  |  $arg6
 
-breakpoint list
+Usage: `po $arg2`
 
-// Break on exact ObjC name
-b "-[MyUser name:]"
+##### Create NSString
+`exp NSString *$myMethod = NSStringFromSelector(_cmd)`
+##### Get Selector
+`po NSSelectorFromString($meth)`
 
-// Regex Breakpoint
-rb '\-\[UIViewController\ '
-rb '\-\[YDUser(\(\w+\))?\ '
-```
-
-
-
-Breakpoint 7: no locations (pending).
+## Breakpoints
+##### Delete all breakpoints
+`b delete`
+##### List
+`b list`
+##### Breakpoint on Selector
+`b URLSession:didReceiveChallenge:completionHandler:`
+##### Break on exact ObjC Method
+`b "-[MyUser name:]"`
+##### Breakpoint on completionHandler
+`b -[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:]`
+#####  Regex Breakpoint
+`rb '\-\[UIViewController\ '`
+`rb '\-\[YDUser(\(\w+\))?\ '`
 
 ##### STDOUT
 
