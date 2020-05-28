@@ -41,6 +41,13 @@ Hello 4
 (lldb) p $add
 (int (^)(int, int)) $add = 0x0000000101424110
 ```
+
+##### Void Block
+```
+po void (^$fakeBlock)(int, NSURLCredential * _Nullable) =^(int a, NSURLCredential *b) {NSLog(@"hello. Original enum was set to %d", a);}
+
+po $fakeBlock(2,0)
+```
 ##### Use Global Dispatch Block
 ```
 (lldb) expression
