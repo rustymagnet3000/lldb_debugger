@@ -11,10 +11,15 @@ https://gist.github.com/alanzeino/82713016fd6229ea43a8
 `image dump symtab myApp`
 ##### Symbols of all loaded code (BAD IDEA)
 `image dump symtab`
-##### Looks for a Debug Symbol
+##### Lookup options:
+`help image lookup`
+##### Lookup a Debug Symbol
 `image lookup -r -n YDClass`
-##### Looks for non-debug symbols:
+##### Lookup non-debug symbols:
 `image lookup -r -s YDClass`
+##### Lookup Address:
+`image lookup -a 0x1000016a0`
+
 ##### Print text
 `script print "Hello"`
 ##### Registers (x86_64)
@@ -52,17 +57,33 @@ Usage: `po $arg2`
 `rb '\-\[UIViewController\ '`
 `rb '\-\[YDUser(\(\w+\))?\ '`
 
+
+##### Launch
+`lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is the app name
+##### Import lldb script
+`command source <file_path>/lldb_script.txt`
+##### Import Python script
+`command script import <file_path>/lldb_python.py`
+##### Lookup
+```
+// This works on a stripped, release app...
+(lldb) lookup -X (?i)address -m my_app
+```
+##### Custom prompt
+```
+// instead of the vanilla (lldb)
+settings set prompt \-\>
+```
+##### lldb iOS Simulators
+Avoid using xCode if you are using the Python Debugger:
+```
+- Kill xcode
+- Run iOS app in the simulator
+- run a `ps -ax` to find your PID
+- `$ lldb -p <PID>`
+```
 ##### STDOUT
-
-If you use..
-
-`lldb --wait-for`
-
-`lldb -attach`
-
-You are attaching **after** a decision on where to send `stdout` has been made.  
-
-For example:
+If you use `lldb --wait-for` or `lldb -attach` you are attaching **after** a decision on where to send `stdout` was made.  For example:
 
 ```
 // NSLog only sent to Console.app when you attach

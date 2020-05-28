@@ -1,13 +1,15 @@
 # Using LLDB to bypass URLSession
 #### Bypass overview
-The goal of this bypass was to set a breakpoint at the start of `URLSession:didReceiveChallenge:completionHandler:` and override the `completionHandler`. Why?  This handler decided what to do with a `network request`.  
+The goal of this bypass was to set a breakpoint at the start of `URLSession:didReceiveChallenge:completionHandler:` and override the `completionHandler`.
+
+Why?  App's often used a `completionHandler` with Apple's `NSURLSession` on iOS and macOS when deciding whether to start a `network request`.  
 
 > completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, NULL);
 
-The above line of code is typically when an app has implemented `Certificate Pinning` and wanted to stop, after deciding it didn't trust the server.
+The above line of code is typical of an app that has implemented `Certificate Pinning`.  The app is asking _"do I trust the server,  before sending data?"_.
 
 #### The Needle
-App's often used a `completionHandler` with Apple's `NSURLSession` on iOS and macOS.  The code would set an `enum` based on whether it trusted the server and connection:
+ The code would set an `enum` based on whether it trusted the server and connection:
 ```
 typedef enum NSURLSessionAuthChallengeDisposition : NSInteger {
     ...
@@ -19,10 +21,10 @@ From: `NSURLSessionAuthChallengeCancelAuthenticationChallenge = 2 `
 
 To: `NSURLSessionAuthChallengePerformDefaultHandling = 1`
 
-I chose not to do this.  It was slow and error prone to find an integer value in `assembly code`. Especially when there was no obvious `Symbol` or `instruction` to leverage [ as we are assuming a stripped, release app ].
+It was slow and error prone to find a small integer value in `assembly code`. Especially when there was no obvious `Symbol` or `instruction` to leverage [ as we are assuming a stripped, release app ].
 
-#### Tip
-You could also drop the `(NSURLAuthenticationChallenge *)challenge` parameter.  However, a lot of code is likely to use that `challenge`.  Better to `substitute` the challenge with a host that is valid and not likely to trigger a `NSURLSessionAuthChallengeCancelAuthenticationChallenge`.
+#### Alternative tip
+You could also drop the `(NSURLAuthenticationChallenge *)challenge` parameter.  However, a lot of code to check the trust would rely on the `challenge`.  If you don't want to attack the `NSURLSessionAuthChallengeDisposition`, you could `substitute` the `challenge` with a host that is valid.
 
 #### Bypass fail - NULL Stack Block
 This bypass dropped the `Stack Block` with a NULL value.  
