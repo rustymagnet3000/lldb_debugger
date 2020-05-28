@@ -1,4 +1,22 @@
 # Using LLDB to bypass URLSession
+#### Bypass overview
+The goal of this bypass was to set a breakpoint and override the `completionHandler` that decided what to do with a `network request`.  This `completionHandler` was widely used with Apple's `NSURLSession` on iOS and macOS.
+
+> completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, NULL);
+
+An alternative bypass would be to stop on this `Enum` from Apple:
+```
+typedef enum NSURLSessionAuthChallengeDisposition : NSInteger {
+    ...
+} NSURLSessionAuthChallengeDisposition;
+```
+The value is passed into a `Stack Block`.  It is slow to find an integer value in `assembly code` when you don't have an obvious Symbol or instruction to use.
+
+If you follow this bypass, you change a value from `NSURLSessionAuthChallengeCancelAuthenticationChallenge = 2 ` to `NSURLSessionAuthChallengePerformDefaultHandling = 1`.
+
+#### Tip
+You could also drop the `(NSURLAuthenticationChallenge *)challenge` parameter.  However, a lot of code is likely to use that `challenge`.  better to `substitute` a challenge that will be valid instead of dropping the original `challenge`.
+
 #### Bypass fail
 This bypass replace a `Function Pointer` with a NULL value.  
 
@@ -37,11 +55,11 @@ You can then inspect every argument passed into the `Selector` (`URLSession:didR
 (lldb) po $arg5 = NULL
 <nil>
 ```
-It crashed.  Why?  There was a later `ASM` instruction to call a Switch Statement inside of the `Function Pointer` plus a certain amount of bytes.  This returned a bad instruction.
+It crashed.  Why?  There was a `assembly` instruction to call a `Function Pointer` plus a certain amount of bytes.  This returned a bad instruction.
 ```
 Thread 2: EXC_BAD_ACCESS (code=1, address=0x10)
 ```
-Quite fun to see the instruction that caused the crash was `call   qword ptr [rcx + 0x10]`.
+Quite fun to see the instruction that caused the crash was `call   qword ptr [rcx + 0x10]`.  So `nulling $arg5` caused `rcx` to be `0`.
 
 #### Source
 ```
