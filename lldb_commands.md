@@ -1,6 +1,12 @@
 # LLDB Commands
 ##### Launch
 `lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is app name
+##### Where am I?
+`frame info`
+##### Which Thread am I on?
+`thread list`
+##### Disassemble
+`disas -s 0x00001620`
 ##### Import lldb script
 `command source <file_path>/lldb_script.txt`
 ##### Import Python script
@@ -65,8 +71,15 @@ Usage: `po $arg2`
 `rb '\-\[UIViewController\ '`
 `rb '\-\[YDUser(\(\w+\))?\ '`
 
-
-
+##### Watchpoint
+```
+watchpoint set variable completionHandler
+watchpoint set expression -- $esi
+help watchpoint set
+help watchpoint set variable
+watchpoint list
+watch del 1
+```
 ##### Custom prompt
 ```
 // instead of the vanilla (lldb)
@@ -80,7 +93,13 @@ Avoid using xCode if you are using the Python Debugger:
 - run a `ps -ax` to find your PID
 - `$ lldb -p <PID>`
 ```
-##### STDOUT
+## Advanced
+##### Logging
+`settings set target.process.extra-startup-command QSetLogging:bitmask=LOG_ALL;`
+##### Watch Packets ( caution )
+(lldb) log enable gdb-remote packets
+
+## STDOUT
 If you use `lldb --wait-for` or `lldb -attach` you are attaching **after** a decision on where to send `stdout` was made.  For example:
 
 ```

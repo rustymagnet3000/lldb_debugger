@@ -1,4 +1,8 @@
 ## LLDB References
+#### Breakpoint commands
+https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html
+#### Hardware Breakpoints
+https://reverse.put.as/2019/11/19/how-to-make-lldb-a-real-debugger/
 #### Fun cheat sheet
 https://gist.github.com/alanzeino/82713016fd6229ea43a8
 #### Inspiration
