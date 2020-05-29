@@ -1,13 +1,13 @@
 #!/usr/bin/python
 #----------------------------------------------------------------------
-#  load the script:  (lldb) command script import ~/Coding/debugger_playground/15_python_lldb_scripts/yd_pythonlldb_scripts.py
+#  load the script:  (lldb) command script import yd_pythonlldb_scripts.py
 #----------------------------------------------------------------------
 
 import lldb
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloSmoke yd_hello_smoke')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_whereamI')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_where_am_I')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDChip yd_chip')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFrame yd_frame_print')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDGetBundleIdentifier yd_bundle_id')
