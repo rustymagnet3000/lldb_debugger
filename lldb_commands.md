@@ -63,6 +63,10 @@ Usage: `po $arg2`
 `breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:`
 ##### Breakpoint on Selector in Module
 `breakpoint set --selector URLSession:didReceiveChallenge:completionHandler: -s playModule`
+##### Breakpoint naming
+`breakpoint set --selector blah:blah -s objc_play -N fooName`
+##### Breakpoint condition
+`br mod -c $arg2 == "URLSession:didReceiveChallenge:completionHandler:" fooName`
 ##### Break on exact ObjC Method
 `b "-[MyUser name:]"`
 ##### Breakpoint on completionHandler
@@ -70,7 +74,20 @@ Usage: `po $arg2`
 #####  Regex Breakpoint
 `rb '\-\[UIViewController\ '`
 `rb '\-\[YDUser(\(\w+\))?\ '`
-
+`breakpoint set --func-regex=. --shlib=objc_play`
+#####  Breakpoint all code inside a function
+```
+(lldb) breakpoint command add -s python fooName
+Enter your Python command(s). Type 'DONE' to end.
+    print("[!]found it")
+    DONE
+```
+#####  Breakpoint all code inside a function
+```
+(lldb) script
+>>> for a in range(0x1000016bc, 0x1000016d1):
+... 	lldb.target.BreakpointCreateByAddress(a)
+```
 ##### Watchpoint
 ```
 watchpoint set variable completionHandler

@@ -18,11 +18,9 @@ The above line of code is typical of an app that has implemented `Certificate Pi
      NSURLSessionAuthChallengeRejectProtectionSpace = 3,                               /* This challenge is rejected and the next authentication protection space should be tried; the credential parameter is ignored. */
  }
 ```
-It was slow and error prone to find a small integer value in `assembly code`, unless you could place an excellent breakpoint.  It would be great if we just could watch for a `Register` value changing to something we did not like.  Then we could
+It was slow and error prone to find a small integer value in `assembly code`, unless you could place an excellent breakpoint.  It would be great if we just could watch for a `Hardware Register` value changing to something we did not like.  That was easy with the old macOS debugger `gdb`.
 
-https://reverse.put.as/2019/11/19/how-to-make-lldb-a-real-debugger/
-
-There was no obvious `Symbol` or `instruction` to leverage [ as we are assuming a stripped, release app ] as you will read.
+But this didn't seem possible with `lldb` without some serious effort:  https://reverse.put.as/2019/11/19/how-to-make-lldb-a-real-debugger/
 
 #### Alternative tip
 You could also drop the `(NSURLAuthenticationChallenge *)challenge` parameter.  But that would probably cause unexpected behavior, as code would rely on the `challenge` to extract the `Certificate Chain` from the server.  If you really don't want to attack the `NSURLSessionAuthChallengeDisposition`, you could `substitute` the `challenge` with a host that is valid.
@@ -61,7 +59,7 @@ Where is the Completion Handling pointing?
       Address: CFNetwork[0x00000000001e0a04] (CFNetwork.__TEXT.__text + 1964164)
       Summary: CFNetwork`___lldb_unnamed_symbol10036$$CFNetwork
 ```
-Well, another way to get a clue what is:
+Well, another way to get a clue what is happening:
 ```
 (lldb) po $arg5     // if you stop at the Method entry
 <__NSStackBlock__: 0x70000598cba8>
