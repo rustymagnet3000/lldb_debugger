@@ -127,6 +127,26 @@ Sure enough, if you set a `breakpoint` on this `opcode`:
  copy     : 0x7fff30d3b7ed (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
  dispose  : 0x7fff30d3b825 (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
 ```
+
+#### Bypass fail - NOP instruction
+In Hopper, the instruction that passes the values we can about is here:
+```
+00000001000016ce         call       qword [rcx+0x10]
+```
+This is the line that is passing the `NSURLSessionAuthChallengeDisposition` into an `ObjC Block`, as we saw earlier:
+
+ `(*(arg4 + 0x10))(arg4, 0x2, 0x0, arg4);`
+
+The `0x0` is because we are not passing in `Credentials` from the server.
+
+If you `step` with a debugger,  this was a `call opcode` to code that originated from inside `/System/Library/Frameworks/CFNetwork.framework`. I think the code is copied into the `Stack` but I can't be sure.
+
+Anyway, if you select `Modify/NOP Region`.  This will change the call to:
+```
+00000001000016ce         nop        dword [rax]
+```
+Then select `File/Produce New Executable` and drop the `Code Signature`.  As this is macOS, it will still run without a valid `Code Signature`.  If this was `iOS` we would have to go and resign everything [ which is no big deal ].
+
 #### Source
 ```
 #import <Foundation/Foundation.h>
