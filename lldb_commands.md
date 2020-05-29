@@ -1,6 +1,10 @@
 # LLDB Commands
-## Great cheat sheets
-https://gist.github.com/alanzeino/82713016fd6229ea43a8
+##### Launch
+`lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is app name
+##### Import lldb script
+`command source <file_path>/lldb_script.txt`
+##### Import Python script
+`command script import <file_path>/lldb_python.py`
 ##### Brief list of attached Libraries
 `image list -b`
 ##### Sections of all loaded code
@@ -19,7 +23,11 @@ https://gist.github.com/alanzeino/82713016fd6229ea43a8
 `image lookup -r -s YDClass`
 ##### Lookup Address:
 `image lookup -a 0x1000016a0`
-
+##### Search for Object on Heap:
+```
+(lldb) search -r 0x0000000100610570
+__NSURLSessionLocal * [0x0000000100614d20] + 0x28
+```
 ##### Print text
 `script print "Hello"`
 ##### Registers (x86_64)
@@ -58,17 +66,7 @@ Usage: `po $arg2`
 `rb '\-\[YDUser(\(\w+\))?\ '`
 
 
-##### Launch
-`lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is the app name
-##### Import lldb script
-`command source <file_path>/lldb_script.txt`
-##### Import Python script
-`command script import <file_path>/lldb_python.py`
-##### Lookup
-```
-// This works on a stripped, release app...
-(lldb) lookup -X (?i)address -m my_app
-```
+
 ##### Custom prompt
 ```
 // instead of the vanilla (lldb)

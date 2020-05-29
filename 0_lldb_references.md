@@ -1,28 +1,6 @@
-# Pro lldb tips
-#### Launch
-`lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is the app name
-#### Import lldb script
-`command source <file_path>/lldb_script.txt`
-#### Import Python script
-`command script import <file_path>/lldb_python.py`
-#### Lookup
-```
-// This works on a stripped, release app...
-(lldb) lookup -X (?i)address -m my_app
-```
-#### Custom prompt
-```
-// instead of the vanilla (lldb)
-settings set prompt \-\>
-```
-#### lldb iOS Simulators
-Avoid using xCode if you are using the Python Debugger
-- Kill xcode
-- Run iOS app in the simulator
-- run a `ps -ax` to find your PID
-- `$ lldb -p <PID>`
-
-### LLDB References
+## LLDB References
+#### Fun cheat sheet
+https://gist.github.com/alanzeino/82713016fd6229ea43a8
 #### Inspiration
 https://github.com/DerekSelander/LLDB
 #### Multi-line lldb commands
