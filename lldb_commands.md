@@ -59,12 +59,16 @@ Usage: `po $arg2`
 `b delete`
 ##### List
 `b list`
+##### Breakpoint on Address ( gdb syntax )
+`b *0x1000016ce`
+##### Breakpoint on Address with name (lldb syntax )
+`br s -a 0x1000016ce -N fooName`
 ##### Breakpoint on Selector
 `breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:`
 ##### Breakpoint on Selector in Module
-`breakpoint set --selector URLSession:didReceiveChallenge:completionHandler: -s playModule`
+`breakpoint set --selector blah:blah: -s playModule`
 ##### Breakpoint naming
-`breakpoint set --selector blah:blah -s objc_play -N fooName`
+`breakpoint set --selector blah:blah: -s objc_play -N fooName`
 ##### Breakpoint condition
 `br mod -c $arg2 == "URLSession:didReceiveChallenge:completionHandler:" fooName`
 ##### Break on exact ObjC Method
@@ -75,7 +79,7 @@ Usage: `po $arg2`
 `rb '\-\[UIViewController\ '`
 `rb '\-\[YDUser(\(\w+\))?\ '`
 `breakpoint set --func-regex=. --shlib=objc_play`
-#####  Breakpoint all code inside a function
+#####  Add Python script to a Breakpoint
 ```
 (lldb) breakpoint command add -s python fooName
 Enter your Python command(s). Type 'DONE' to end.
@@ -97,11 +101,6 @@ help watchpoint set variable
 watchpoint list
 watch del 1
 ```
-##### Custom prompt
-```
-// instead of the vanilla (lldb)
-settings set prompt \-\>
-```
 ##### lldb iOS Simulators
 Avoid using xCode if you are using the Python Debugger:
 ```
@@ -114,7 +113,9 @@ Avoid using xCode if you are using the Python Debugger:
 ##### Logging
 `settings set target.process.extra-startup-command QSetLogging:bitmask=LOG_ALL;`
 ##### Watch Packets ( caution )
-(lldb) log enable gdb-remote packets
+`log enable gdb-remote packets`
+##### Custom prompt
+`settings set prompt \-\>`
 
 ## STDOUT
 If you use `lldb --wait-for` or `lldb -attach` you are attaching **after** a decision on where to send `stdout` was made.  For example:
