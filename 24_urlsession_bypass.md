@@ -176,8 +176,6 @@ Visually, I imagined a pretty switch statement inside of some `CFNetwork` code t
 
 #### Source
 ```
-#import <Foundation/Foundation.h>
-
 @interface YDURLSessionDel : NSObject <NSURLSessionDelegate>
 @end
 
@@ -185,8 +183,8 @@ Visually, I imagined a pretty switch statement inside of some `CFNetwork` code t
 - (void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler{
 
     SecTrustRef trust = [[challenge protectionSpace] serverTrust];
-    NSLog(@"🍭\tChallenged on: %@", [[challenge protectionSpace] host]);
-    NSLog(@"🍭\tCert chain length: %ld", (long)SecTrustGetCertificateCount(trust));
+    NSLog(@"🍭Challenged on: %@", [[challenge protectionSpace] host]);
+    NSLog(@"🍭Cert chain length: %ld", (long)SecTrustGetCertificateCount(trust));
 
     completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, NULL);
 }
@@ -201,14 +199,18 @@ int main(void) {
         NSURLRequest *request = [NSURLRequest requestWithURL:url];
 
         NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+        NSLog(@"🍭 @property waitsForConnectivity default: %hhd", config.waitsForConnectivity);
+        config.waitsForConnectivity = YES;
+
         NSURLSession *session = [NSURLSession sessionWithConfiguration:config delegate:del delegateQueue:nil];
         NSLog(@"🍭 start");
         NSURLSessionDataTask *task = [session dataTaskWithRequest: request
                                                 completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-                                    if (!data) {
-                                        NSLog(@"🍭 %@", error);
-                                    }
 
+                                    if (error) {
+                                        if(error.code == -999)
+                                            NSLog(@"🍭 Bypass failed. Connection: %@ ( %ld)", [error localizedDescription], (long)error.code);
+                                    }
                                     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
                                         NSLog(@"🍭 HTTP Response Code: %ld", (long)[(NSHTTPURLResponse *)response statusCode]);
                                     }
@@ -221,4 +223,5 @@ int main(void) {
     }
     return 0;
 }
+
 ```

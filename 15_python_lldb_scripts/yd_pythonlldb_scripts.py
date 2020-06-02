@@ -20,10 +20,9 @@ def YDBypassURLSessionTrust(debugger, command, result, internal_dict):
     """
         Sets the NSURLSessionAuthChallengeDisposition to Default. Requires user to stop when the $RSI register contained the NSURLSessionAuthChallengeDisposition
     """
-    print("[*] bypass attempt started")
+    print("[*]URLSession trust bypass started")
     original_value = str(lldb.frame.register["rsi"])
-    print("[*]originalValue: of NSURLSessionAuthChallengeDisposition " + original_value)
-
+    print("[*]Original of NSURLSessionAuthChallengeDisposition:\t" + original_value)
     lldb.frame.register["rsi"].value = "1"
 
     thread = lldb.frame.GetThread()

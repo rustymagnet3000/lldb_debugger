@@ -7,6 +7,11 @@ script print (lldb.frame)
 (lldb) script lldb.target
 <lldb.SBTarget; proxy of <Swig Object of type 'lldb::SBTarget *' at 0x14867a360> >
 
+(lldb) print lldb.frame.registers
+(lldb) script help(lldb.process)
+(lldb) script help(lldb.frame)
+(lldb) script lldb.debugger.HandleCommand("frame info")
+
 (lldb) script print lldb.target
 SampleApp-Swift
 
