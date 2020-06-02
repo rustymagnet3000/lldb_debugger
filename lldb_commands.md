@@ -79,11 +79,22 @@ Usage: `po $arg2`
 `rb '\-\[UIViewController\ '`
 `rb '\-\[YDUser(\(\w+\))?\ '`
 `breakpoint set --func-regex=. --shlib=objc_play`
-#####  Add Python script to a Breakpoint
+#####  Python script when Breakpoint fires
 ```
 (lldb) breakpoint command add -s python fooName
 Enter your Python command(s). Type 'DONE' to end.
     print("[!]found it")
+    DONE
+```
+#####  Add & continue Python script when Breakpoint fires
+```
+(lldb) breakpoint command add -s python fooName
+    print lldb.frame.register["rsi"].value
+    lldb.frame.register["rsi"].value = "1"
+    print("[*]new value set.")
+    thread = frame.GetThread()
+    process = thread.GetProcess()
+    process.Continue()
     DONE
 ```
 #####  Breakpoint all code inside a function
