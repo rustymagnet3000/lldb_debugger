@@ -17,40 +17,54 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintRegisters yd_print_registers')
 
 
-def YDBypassURLSessionTrust(debugger, command, result, internal_dict):
+def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     """
-        Sets the NSURLSessionAuthChallengeDisposition to Default. Requires user to stop when the $RSI register contained the NSURLSessionAuthChallengeDisposition
+        Sets the NSURLSessionAuthChallengeDisposition to Default.
+        Requires user to stop when the $RSI register contained the NSURLSessionAuthChallengeDisposition.
     """
+
+    frame = exe_ctx.frame
+    if frame is None:
+        result.SetError('[!]You must have the process suspended in order to execute this command')
+        return
+
     print("[*]URLSession trust bypass started")
-    valuersi = lldb.frame.FindRegister("rsi")
-    valueesi = lldb.frame.FindValue("esi", lldb.eValueTypeConstResult)
-    print("[*]Original of NSURLSessionAuthChallengeDisposition: " + str(valuersi.unsigned))
+    error = lldb.SBError()
+    disposition = frame.FindRegister("rsi")
+    print("[*]Original of NSURLSessionAuthChallengeDisposition: " + str(disposition))
 
-    if valuersi.unsigned == 2:
-        print "[!]Found rsi cancel"
-    if valueesi.unsigned == 2:
-        print "[!]Found esi cancel"
+    if disposition.unsigned == 2:
+        print "[!]NSURLSessionAuthChallengeDisposition set to Cancel."
+        result = frame.registers[0].GetChildMemberWithName('rsi').SetValueFromCString("0x1", error)
+        messages = {None: 'error', True: 'pass', False: 'fail'}
+        print ("[*]PATCHING result: " + messages[result])
 
-    thread = lldb.frame.GetThread()
+    thread = frame.GetThread()
     process = thread.GetProcess()
     process.Continue()
 
 
-def YDPrintRegisters(debugger, command, result, internal_dict):
+def YDPrintRegisters(debugger, command, exe_ctx, result, internal_dict):
     """
-        Prints registers. Copied from https://lldb.llvm.org/python_reference/lldb.SBValue-class.html
-        Good way to show how to deal with SBValue Type
+        Prints registers. Variant of https://lldb.llvm.org/python_reference/lldb.SBValue-class.html
+        Good way to show how using exe_ctx to get the Register values
     """
-    print("[*]YDPrintRegisters started")
-    registerSet = lldb.frame.registers # Returns an SBValueList.
-    for regs in registerSet:
+
+    frame = exe_ctx.frame
+    if frame is None:
+        result.SetError('[!]You must have the process suspended in order to execute this command')
+        return
+
+    print("[*]Frame " + str(frame))
+    registerset = frame.registers # Returns an SBValueList.
+    for regs in registerset:
         if 'general purpose registers' in regs.name.lower():
             GPRs = regs
             break
 
     print('%s (number of children = %d):' % (GPRs.name, GPRs.num_children))
     for reg in GPRs:
-        print('Name: ', reg.name, ' Value: ', reg.value)
+        print(reg.name, ' Value: ', reg.value)
 
 def getRegisterString(target):
     triple_name = target.GetTriple()
