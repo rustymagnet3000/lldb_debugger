@@ -1,106 +1,40 @@
-# Using LLDB to bypass URLSession
+# Using LLDB to bypass Certificate Pinning with URLSession
 #### Bypass overview
-The goal of this bypass was to set a breakpoint at the start of `URLSession:didReceiveChallenge:completionHandler:` and override the `completionHandler`.
+_"Do I trust the server,  before sending data?"_.  You will often find that question in iOS and Android app code.  It refers to `certificate pinning`.
 
-Why?  App's often used a `completionHandler` with Apple's `NSURLSession` on iOS and macOS when deciding whether to start a `network request`.  
+The below script overwrites the answer to that question.  The bypass requires a debugger (`lldb`) a scripting language (`python`) and writing values in memory (`registers`).
+
+#### Result
+```
+(lldb) br s -a 0x1000013ae -N fooName
+Breakpoint 2: where = objc_play`-[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:] + 334 at main.m:19:5, address = 0x00000001000013ae
+
+(lldb) c
+Process 48838 resuming
+🍭Start
+🍭Challenged on: www.google.com
+🍭Cert chain length: 3
+
+(lldb) yd_bypass_urlsession       // run custom Python LLDB script
+
+[*]URLSession trust bypass started
+[*]Original of NSURLSessionAuthChallengeDisposition: (unsigned long) rsi = 0x0000000000000002
+[!]NSURLSessionAuthChallengeDisposition set to Cancel.
+[*]PATCHING result: pass
+🍭 HTTP Response Code: 200
+🍭 finish
+```
+#### Background
+App's often used a `completionHandler` with Apple's `NSURLSession` on iOS and macOS when deciding whether to start a `network request`.  
 
 > completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, NULL);
 
-The above line of code is typical of an app that has implemented `Certificate Pinning`.  The app is asking _"do I trust the server,  before sending data?"_.
+The above line of code is typical of an app that has implemented `Certificate Pinning` and has decided to stop the network request from being sent.  
 
-#### The Needle
- The code would set an `enum` based on whether it trusted the server and connection:
- ```
- typedef NS_ENUM(NSInteger, NSURLSessionAuthChallengeDisposition) {
-     NSURLSessionAuthChallengeUseCredential = 0,                                       /* Use the specified credential, which may be nil */
-     NSURLSessionAuthChallengePerformDefaultHandling = 1,                              /* Default handling for the challenge - as if this delegate were not implemented; the credential parameter is ignored. */
-     NSURLSessionAuthChallengeCancelAuthenticationChallenge = 2,                       /* The entire request will be canceled; the credential parameter is ignored. */
-     NSURLSessionAuthChallengeRejectProtectionSpace = 3,                               /* This challenge is rejected and the next authentication protection space should be tried; the credential parameter is ignored. */
- }
-```
-It was slow and error prone to find a small integer value in `assembly code`, unless you could place an excellent breakpoint.  It would be great if we just could watch for a `Hardware Register` value changing to something we did not like.  That was easy with the old macOS debugger `gdb`.
+#### Find the Needle in the Haystack
+If you ingested the executable file into a disassembler like **Hopper**, you could find the `assembly instruction` to patch out the answer.  
 
-But this didn't seem possible with `lldb` without some serious effort:  https://reverse.put.as/2019/11/19/how-to-make-lldb-a-real-debugger/
-
-#### Alternative tip
-You could also drop the `(NSURLAuthenticationChallenge *)challenge` parameter.  But that would probably cause unexpected behavior, as code would rely on the `challenge` to extract the `Certificate Chain` from the server.  If you really don't want to attack the `NSURLSessionAuthChallengeDisposition`, you could `substitute` the `challenge` with a host that is valid.
-
-#### Bypass fail - NULL Stack Block
-This bypass dropped the `Stack Block` with a NULL value.  
-
-```
-(lldb) breakpoint set --selector URLSession:didReceiveChallenge:completionHandler: -s objc_play
-Breakpoint 2: where = objc_play`-[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:] at main.m:7, address = 0x0000000100001620
-(lldb) c
-```
-At this point the Breakpoint fires.
-
-You can then inspect every argument passed into the `Selector` (`URLSession:didReceiveChallenge:completionHandler:`):
-```
-(lldb) po $arg1
-<YDURLSessionDel: 0x1005436c0>
-
-(lldb) po (char *)$arg2
-"URLSession:didReceiveChallenge:completionHandler:"
-```
-Or, a more efficient way:
-```
-(lldb) frame variable
-(YDURLSessionDel *) self = 0x0000000102845fa0
-(SEL) _cmd = "URLSession:didReceiveChallenge:completionHandler:"
-(__NSURLSessionLocal *) session = 0x0000000100605f50
-(NSURLAuthenticationChallenge *) challenge = 0x000000010285cbe0
-(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential *)) completionHandler = 0x00007fff30e47a04
-(SecTrustRef) trust = 0x000000010285b510
-```
-Where is the Completion Handling pointing?
-```
-(lldb) image lookup -a 0x00007fff30e47a04
-      Address: CFNetwork[0x00000000001e0a04] (CFNetwork.__TEXT.__text + 1964164)
-      Summary: CFNetwork`___lldb_unnamed_symbol10036$$CFNetwork
-```
-Well, another way to get a clue what is happening:
-```
-(lldb) po $arg5     // if you stop at the Method entry
-<__NSStackBlock__: 0x70000598cba8>
- signature: "v24@?0q8@"NSURLCredential"16"
- invoke   : 0x7fff30e47a04 (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFHTTPCookieStorageUnscheduleFromRunLoop)
- copy     : 0x7fff30d3b7ed (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
- dispose  : 0x7fff30d3b825 (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
-```
-Now we can see this code points `CFNetwork.CFHTTPCookieStorageUnscheduleFromRunLoop`.  
-
-If you read Apple [documentation](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Blocks/Articles/bxVariables.html#//apple_ref/doc/uid/TP40007502-CH6-SW1) on this, you can see it copies a whole chain of code onto the `Stack`, it just starts with `Cookie` related code.
-
-> When you copy a block, any references to other blocks from within that block are copied if necessary—an entire tree may be copied (from the top). If you have block variables and you reference a block from within the block, that block will be copied.
-
-Let's try and remove the `Completion Handler`!
-```
-(lldb) po $arg5 = NULL
-(lldb) c
-```
-It crashed.  Why?
-```
-Thread 2: EXC_BAD_ACCESS (code=1, address=0x10)
-```
-The instruction that caused the crash was `call   qword ptr [rcx + 0x10]`.  So `nulling` caused `rcx` to be `0`.  The result, a bad address.
-
-#### Bypass fail - a fake Block
-```
-lldb) breakpoint set --selector URLSession:didReceiveChallenge:completionHandler: -s objc_play
-
-(lldb) exp
-1 void (^$simpleBlock)(void) = ^{NSLog(@"hello from a block!");};
-(lldb) p $simpleBlock
-(void (^)()) $simpleBlock = 0x00000001041ff300
-
-// at start of the function
-(lldb) po $arg5 = 0x00000001041ff300
-4364169984
-```
-Sure enough, the same crash AFTER my fake block ran.
-#### Hopper Disassembler
-If you use the `pseudo-code mode` in Hopper, it attempted to understand the code flow of: `URLSession:didReceiveChallenge:completionHandler:`:
+Hopper had a really nice pseudo code flow of: `URLSession:didReceiveChallenge:completionHandler:`:
 ```
 /* @class YDURLSessionDel */
 -(void)URLSession:(void *)arg2 didReceiveChallenge:(void *)arg3 completionHandler:(void *)arg4 {
@@ -119,7 +53,7 @@ In assembly, that is this instruction:
 ```
 0x1000016ce <+174>: call   qword ptr [rcx + 0x10]
 ```
-Sure enough, if you set a `breakpoint` on this `opcode`:
+Sure enough, if you set a `breakpoint` on this `instruction`:
 ```
 (lldb) po $arg1
 <__NSStackBlock__: 0x7000050deba8>
@@ -142,37 +76,45 @@ Sure enough, if you set a `breakpoint` on this `opcode`:
  dispose  : 0x7fff30d3b825 (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
 ```
 
-#### Bypass fail - NOP instruction
-In Hopper, the instruction that passes the values we care about was here:
+What is the `2` value in the second register (`arg2`)?  If a server and connection was trusted or not, the result was often this value:
+ ```
+typedef NS_ENUM(NSInteger, NSURLSessionAuthChallengeDisposition) {
+   NSURLSessionAuthChallengeUseCredential = 0,                                       /* Use the specified credential, which may be nil */
+   NSURLSessionAuthChallengePerformDefaultHandling = 1,                              /* Default handling for the challenge - as if this delegate were not implemented; the credential parameter is ignored. */
+   NSURLSessionAuthChallengeCancelAuthenticationChallenge = 2,                       /* The entire request will be canceled; the credential parameter is ignored. */
+   NSURLSessionAuthChallengeRejectProtectionSpace = 3,                               /* This challenge is rejected and the next authentication protection space should be tried; the credential parameter is ignored. */
+}
 ```
-call       qword [rcx+0x10]
+
+#### Breakpoint and script
+Most of the effort and skill was placing a breakpoint.
 ```
-This `opcode` passes the `NSURLSessionAuthChallengeDisposition` into an `ObjC Block`, as we saw earlier:
-
- `(*(arg4 + 0x10))(arg4, 0x2, 0x0, arg4);`
-
-`0x2` is the `Cancel challenge` option, `0x0` is because we are not passing in `Credentials` from the server.
-
-If you `step` with a debugger,  this `call` stepped to an unnamed `Symbol` inside of `/System/Library/Frameworks/CFNetwork.framework`.
-
-If you select `Modify/NOP Region` on this `instruction` it will change the call to:
+(lldb) br s -a 0x1000013ae -N fooName
 ```
-nop        dword [rax]
-```
-Then select `File/Produce New Executable` and drop the `Code Signature` when prompted. As this is macOS, it will still run without a valid `Code Signature`.  If this was `iOS` we would have to go and resign everything [ which is no big deal ].
+You could then - now you have named the breakpoint - add instructions to the breakpoint OR you could invoke a Python script from the command line.
 
-The app runs with interesting results.  A single retry. Then the app never returns.
+I choose to invoke my own Python script so it was simple to re-use this code on other apps. The main lines of the script were:
 ```
-🍭 start
-🍭	Challenged on: www.google.com
-🍭	Cert chain length: 3
-// 10 seconds later
-🍭	Challenged on: www.google.com
-🍭	Cert chain length: 3
+frame = exe_ctx.frame
+disposition = frame.FindRegister("rsi")
+if disposition.unsigned == 2:
+     print "[!]NSURLSessionAuthChallengeDisposition set to Cancel."
+     result = frame.registers[0].GetChildMemberWithName('rsi').SetValueFromCString("0x1", error)
+     messages = {None: 'error', True: 'pass', False: 'fail'}
+     print ("[*]PATCHING result: " + messages[result])
 ```
-That means the we just patched out the code actually completes the request.  We created a fake `Timeout`.  Nice.
+The trick was `frame = exe_ctx.frame`.  If you didn't have this context - from https://lldb.llvm.org/use/python-reference.html - you would get stuck for hours / days.
 
-Visually, I imagined a pretty switch statement inside of some `CFNetwork` code that said, _"if I trust this `NSURLSessionAuthChallengeDisposition` then send the request"_.
+The full bypass code: https://github.com/rustymagnet3000/reverse_engineer_ios_with_debugger/blob/master/15_python_lldb_scripts/yd_pythonlldb_scripts.py
+
+#### Try, try and try again
+Like most bypass code, I tried multiple ideas.  I removed the details of failed ones for brevity.  If you care, essentially they were:
+
+ - Set `completionHandler` to NULL
+ - Overwrite the instruction with no operation ( a `NOP instruction` )
+ - Passing a `NULL Objective-C block`
+ - Passing a fake `Objective-C block`
+ - Drop the `(NSURLAuthenticationChallenge *)challenge` ( failed as a lot of code depends on this challenge)
 
 #### Source
 ```
