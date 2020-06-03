@@ -14,6 +14,7 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFrame yd_frame_print')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDGetBundleIdentifier yd_bundle_id')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDThreadBeauty yd_thread_list')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintRegisters yd_print_registers')
 
 
 def YDBypassURLSessionTrust(debugger, command, result, internal_dict):
@@ -21,14 +22,35 @@ def YDBypassURLSessionTrust(debugger, command, result, internal_dict):
         Sets the NSURLSessionAuthChallengeDisposition to Default. Requires user to stop when the $RSI register contained the NSURLSessionAuthChallengeDisposition
     """
     print("[*]URLSession trust bypass started")
-    original_value = str(lldb.frame.register["rsi"])
-    print("[*]Original of NSURLSessionAuthChallengeDisposition:\t" + original_value)
-    lldb.frame.register["rsi"].value = "1"
+    valuersi = lldb.frame.FindRegister("rsi")
+    valueesi = lldb.frame.FindValue("esi", lldb.eValueTypeConstResult)
+    print("[*]Original of NSURLSessionAuthChallengeDisposition: " + str(valuersi.unsigned))
+
+    if valuersi.unsigned == 2:
+        print "[!]Found rsi cancel"
+    if valueesi.unsigned == 2:
+        print "[!]Found esi cancel"
 
     thread = lldb.frame.GetThread()
     process = thread.GetProcess()
     process.Continue()
 
+
+def YDPrintRegisters(debugger, command, result, internal_dict):
+    """
+        Prints registers. Copied from https://lldb.llvm.org/python_reference/lldb.SBValue-class.html
+        Good way to show how to deal with SBValue Type
+    """
+    print("[*]YDPrintRegisters started")
+    registerSet = lldb.frame.registers # Returns an SBValueList.
+    for regs in registerSet:
+        if 'general purpose registers' in regs.name.lower():
+            GPRs = regs
+            break
+
+    print('%s (number of children = %d):' % (GPRs.name, GPRs.num_children))
+    for reg in GPRs:
+        print('Name: ', reg.name, ' Value: ', reg.value)
 
 def getRegisterString(target):
     triple_name = target.GetTriple()
