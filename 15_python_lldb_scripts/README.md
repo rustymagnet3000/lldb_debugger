@@ -1,6 +1,17 @@
 ## Using Python to write LLDB scripts
 ### Warm-up
 ```
+>>> print(lldb.SBFrame)
+<class 'lldb.SBFrame'>
+
+>>> lldb.frame
+<lldb.SBFrame; proxy of <Swig Object of type 'lldb::SBFrame *' at 0x114bdc330> >
+
+>>> print(lldb.frame)
+frame #0: 0x00000001000013df objc_play`main at main.m:26:42
+```
+### Warm-up
+```
 // Great auto-continue breakpoint to print which method is executing
 script print (lldb.frame)
 
@@ -112,19 +123,20 @@ lastName = "Jackel"
 '42'
 ```
 
-
-
 ### Troubleshooting
-If you hit `unable to execute script function` you are probably hitting what is reported here:
-
-http://ryanipete.com/blog/lldb/python/how_to_create_a_custom_lldb_command_pt_1/
-
-Make sure your `madman.py` filename matches the name in this code:
+If you hit `unable to execute script function` make sure your `madman.py` filename matches the name in this code:
 ```
 debugger.HandleCommand('command script add -f madman.GetBundleIdentifier yd_bundle_id')
 ```
 ### References
+https://lldb.llvm.org/use/python-reference.html
+
 https://github.com/theocalmes/lldbpy
+
+http://ryanipete.com/blog/lldb/python/how_to_create_a_custom_lldb_command_pt_1/
+
 https://lldb.llvm.org/use/python.html
+
 https://aijaz.net/2017/01/11/lldb-python/index.html
+
 https://hub.packtpub.com/lldb-and-command-line/
