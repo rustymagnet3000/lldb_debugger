@@ -22,7 +22,7 @@ def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     """
         Sets the NSURLSessionAuthChallengeDisposition to Default.
         Requires user to stop when the $RSI register contained the NSURLSessionAuthChallengeDisposition.
-        This script only works on x86_64 bit ( iOS simulator / macOS )
+        Uses $arg alias to make it work on x86_64 and arm64 ( iOS simulator / macOS / iOS device )
     """
 
     frame = exe_ctx.frame
@@ -37,7 +37,7 @@ def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     if disposition.unsigned == 2:
         print "[!]NSURLSessionAuthChallengeDisposition set to Cancel."
         error = lldb.SBError()
-        result = frame.registers[0].GetChildMemberWithName('rsi').SetValueFromCString("0x1", error)
+        result = frame.registers[0].GetChildMemberWithName('arg2').SetValueFromCString('0x1', error)
         messages = {None: 'error', True: 'pass', False: 'fail'}
         print ("[*]PATCHING result: " + messages[result])
 
@@ -45,24 +45,25 @@ def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     process = thread.GetProcess()
     process.Continue()
 
+
 def YDPrintFourRegisters(debugger, command, exe_ctx, result, internal_dict):
     """
         Prints only four registers.
         Tries to print as decimal and then as char *.
-        Uses $arg alias to make it work on x86_64 and arm64
+        Uses $arg alias to make it work on x86_64 and arm64 ( iOS simulator / macOS / iOS device )
     """
     frame = exe_ctx.frame
     if frame is None:
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
-    print("[*]Frame " + str(frame))
 
-    focalregisters = ["arg0", "arg1", "arg2", "arg3"]
+    focalregisters = ['arg0', 'arg1', 'arg2', 'arg3', 'arg4']
     for i in focalregisters:
         reg = frame.FindRegister(i)
-        print(i, reg.GetValue())
-
-
+        if reg.description is None:
+            print(i, reg.value)
+        else:
+            print(i, reg.description)
 
 def YDPrintRegisters(debugger, command, exe_ctx, result, internal_dict):
     """

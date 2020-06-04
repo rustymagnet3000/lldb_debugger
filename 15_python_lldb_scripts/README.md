@@ -1,8 +1,6 @@
 ## Using Python to write LLDB scripts
 ### Basics
 ```
-(lldb) script print (lldb.frame)
-
 (lldb) script print lldb.target
 SampleApp-Swift
 
@@ -15,6 +13,32 @@ SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swi
 (lldb) print lldb.frame.registers
 
 (lldb) script lldb.debugger.HandleCommand("frame info")
+```
+### SBValue is a friend
+```
+>>> reg = lldb.frame.FindRegister("arg3")
+
+>>> print(reg)
+(unsigned long) rdx = 0x00007ffeefbff598
+
+>>> print(reg.value)
+0x00007ffeefbff598
+
+>>> print(reg.description)
+<__NSStackBlock__: 0x7000053adba8>
+... long description of Blocks of code.
+... another long description of Blocks of code.
+```
+### Print the correct thing
+```
+>>> print(lldb.SBFrame)
+<class 'lldb.SBFrame'>
+
+>>> lldb.frame
+<lldb.SBFrame; proxy of <Swig Object of type 'lldb::SBFrame *' at 0x114bdc330> >
+
+>>> print(lldb.frame)
+frame #0: 0x00000001000013df objc_play`main at main.m:26:42
 ```
 ### Help
 ```
@@ -39,17 +63,6 @@ Swift-4.1
 
 >>> print lldb.debugger.GetSelectedTarget()
 SampleApp-Swift
-```
-### Print the correct thing
-```
->>> print(lldb.SBFrame)
-<class 'lldb.SBFrame'>
-
->>> lldb.frame
-<lldb.SBFrame; proxy of <Swig Object of type 'lldb::SBFrame *' at 0x114bdc330> >
-
->>> print(lldb.frame)
-frame #0: 0x00000001000013df objc_play`main at main.m:26:42
 ```
 ### Print Register value
 ```
