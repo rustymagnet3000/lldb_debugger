@@ -10,17 +10,19 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassURLSessionTrust yd_bypass_urlsession')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloSmoke yd_hello_smoke')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_where_am_I')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDChip yd_chip')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDMachinePlatform yd_chip')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFrame yd_frame_print')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDGetBundleIdentifier yd_bundle_id')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDThreadBeauty yd_thread_list')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintRegisters yd_print_registers')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFourRegisters yd_registers_top4')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintRegisters yd_registers_all')
 
 
 def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     """
         Sets the NSURLSessionAuthChallengeDisposition to Default.
         Requires user to stop when the $RSI register contained the NSURLSessionAuthChallengeDisposition.
+        This script only works on x86_64 bit ( iOS simulator / macOS )
     """
 
     frame = exe_ctx.frame
@@ -29,12 +31,12 @@ def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
         return
 
     print("[*]URLSession trust bypass started")
-    error = lldb.SBError()
     disposition = frame.FindRegister("rsi")
     print("[*]Original of NSURLSessionAuthChallengeDisposition: " + str(disposition))
 
     if disposition.unsigned == 2:
         print "[!]NSURLSessionAuthChallengeDisposition set to Cancel."
+        error = lldb.SBError()
         result = frame.registers[0].GetChildMemberWithName('rsi').SetValueFromCString("0x1", error)
         messages = {None: 'error', True: 'pass', False: 'fail'}
         print ("[*]PATCHING result: " + messages[result])
@@ -42,6 +44,24 @@ def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     thread = frame.GetThread()
     process = thread.GetProcess()
     process.Continue()
+
+def YDPrintFourRegisters(debugger, command, exe_ctx, result, internal_dict):
+    """
+        Prints only four registers.
+        Tries to print as decimal and then as char *.
+        Uses $arg alias to make it work on x86_64 and arm64
+    """
+    frame = exe_ctx.frame
+    if frame is None:
+        result.SetError('[!]You must have the process suspended in order to execute this command')
+        return
+    print("[*]Frame " + str(frame))
+
+    focalregisters = ["arg0", "arg1", "arg2", "arg3"]
+    for i in focalregisters:
+        reg = frame.FindRegister(i)
+        print(i, reg.GetValue())
+
 
 
 def YDPrintRegisters(debugger, command, exe_ctx, result, internal_dict):
@@ -66,26 +86,24 @@ def YDPrintRegisters(debugger, command, exe_ctx, result, internal_dict):
     for reg in GPRs:
         print(reg.name, ' Value: ', reg.value)
 
-def getRegisterString(target):
-    triple_name = target.GetTriple()
-    if 'x86_64' in triple_name:
-        return 'simulator 64 bit'
-    elif 'arm64' in triple_name:
-        return 'arm 64 bit'
-    elif 'arm' in triple_name:
-        return 'arm 32'
-    raise Exception('unknown device')
+def printChipType(target):
+    # type: (SBObject) -> void
+    if 'x86_64' in target:
+        print('[*]simulator 64 bit')
+    elif 'arm64' in target:
+        print('[*]arm 64 bit')
+    elif 'arm' in target:
+        print('[*]arm 32 bit')
 
 
-def YDChip(debugger, command, result, internal_dict):
+def YDMachinePlatform(debugger, command, result, internal_dict):
     """
-        Gets the chip type underneath an iOS app
+        Get the chip underneath the O/S. Required to check Assembler instructions.
     """
     target = debugger.GetSelectedTarget()
     triple_name = target.GetTriple()
-    print("[*] triple_name:: {}".format(type(triple_name)))
-    a = getRegisterString(target)
-    result.AppendMessage(a)
+    printChipType(triple_name)
+    result.AppendMessage(triple_name)
 
 
 def YDWhere(debugger, command, result, internal_dict):
