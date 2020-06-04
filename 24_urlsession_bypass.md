@@ -21,8 +21,8 @@ Process 48838 resuming
 [*]Original of NSURLSessionAuthChallengeDisposition: (unsigned long) rsi = 0x0000000000000002
 [!]NSURLSessionAuthChallengeDisposition set to Cancel.
 [*]PATCHING result: pass
-🍭 HTTP Response Code: 200
-🍭 finish
+🍭HTTP Response Code: 200
+🍭finish
 ```
 #### Background
 App's often used a `completionHandler` with Apple's `NSURLSession` on iOS and macOS when deciding whether to start a `network request`.  

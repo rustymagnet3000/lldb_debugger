@@ -1,27 +1,7 @@
 ## Using Python to write LLDB scripts
-### Warm-up
+### Basics
 ```
->>> print(lldb.SBFrame)
-<class 'lldb.SBFrame'>
-
->>> lldb.frame
-<lldb.SBFrame; proxy of <Swig Object of type 'lldb::SBFrame *' at 0x114bdc330> >
-
->>> print(lldb.frame)
-frame #0: 0x00000001000013df objc_play`main at main.m:26:42
-```
-### Warm-up
-```
-// Great auto-continue breakpoint to print which method is executing
-script print (lldb.frame)
-
-(lldb) script lldb.target
-<lldb.SBTarget; proxy of <Swig Object of type 'lldb::SBTarget *' at 0x14867a360> >
-
-(lldb) print lldb.frame.registers
-(lldb) script help(lldb.process)
-(lldb) script help(lldb.frame)
-(lldb) script lldb.debugger.HandleCommand("frame info")
+(lldb) script print (lldb.frame)
 
 (lldb) script print lldb.target
 SampleApp-Swift
@@ -32,29 +12,63 @@ thread #1: tid = 0x67f3e, 0x0000000108005244 SampleApp-Swift`main at AppDelegate
 (lldb) script print lldb.process
 SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swift
 
+(lldb) print lldb.frame.registers
+
+(lldb) script lldb.debugger.HandleCommand("frame info")
+```
+### Help
+```
+(lldb) script help(lldb.process)
+
+(lldb) script help(lldb.frame)
+
 (lldb) script help(lldb.SBDebugger)
 
-(lldb) script // drops you into the embedded python interpreter
+>>> help(lldb.debugger.GetSelectedTarget)
+
+```
+### Script interface
+```
+(lldb) script
 >>> 2+3
 5
 
 >>> print lldb.debugger.GetVersionString()
 lldb-902.0.79.2
-  Swift-4.1
-
->>> help(lldb.debugger.GetSelectedTarget)
+Swift-4.1
 
 >>> print lldb.debugger.GetSelectedTarget()
 SampleApp-Swift
 ```
+### Print the correct thing
+```
+>>> print(lldb.SBFrame)
+<class 'lldb.SBFrame'>
+
+>>> lldb.frame
+<lldb.SBFrame; proxy of <Swig Object of type 'lldb::SBFrame *' at 0x114bdc330> >
+
+>>> print(lldb.frame)
+frame #0: 0x00000001000013df objc_play`main at main.m:26:42
+```
+### Print Register value
+```
+>>> reg = lldb.frame.FindRegister("arg3")
+>>> print(reg)
+(unsigned long) rdx = 0x00007ffeefbff598
+>>> print(reg.GetValue())
+0x00007ffeefbff598
+```
+
 
 ### Well placed Breakpoint
 ```
->>> print lldb.frame
-frame #0: 0x000000010fe033eb tinyDormant`YDMandalorianVC.viewDidLoad(self=0x00007f893b245fa0) at mandalorianVC.swift:8:15
+>>> print lldb.frame.GetFunctionName()
+tinyDormant.YDJediVC.viewDidLoad() -> ()
 
 
 >>> print lldb.frame.get_all_variables()
+
 (tinyDormant.YDJediVC) self = 0x00007fc2421187b0 {
   UIKit.UIViewController = {
     UIKit.UIResponder = {
@@ -66,8 +80,6 @@ frame #0: 0x000000010fe033eb tinyDormant`YDMandalorianVC.viewDidLoad(self=0x0000
   secret_nsstring = 0xfe1420463360b96a "ewok"
 }
 
->>> print lldb.frame.GetFunctionName()
-tinyDormant.YDJediVC.viewDidLoad() -> ()
 ```
 
 ### Instantiate and read ObjC Class
@@ -119,6 +131,7 @@ lastName = "Jackel"
 }
 
 >>> mynumber = lldb.frame.FindVariable("i")
+
 >>> mynumber.GetValue()
 '42'
 ```

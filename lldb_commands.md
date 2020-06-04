@@ -5,8 +5,10 @@
 `frame info`
 ##### Which Thread am I on?
 `thread list`
-##### Disassemble
+##### Disassemble by address
 `disas -s 0x00001620`
+##### Disassemble by function name
+`disas -n Foo.Bar`
 ##### Import lldb script
 `command source <file_path>/lldb_script.txt`
 ##### Import Python script
@@ -67,6 +69,8 @@ Usage: `po $arg2`
 `breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:`
 ##### Breakpoint on Selector in Module
 `breakpoint set --selector blah:blah: -s playModule`
+##### Regex Breakpoint on Selector ( good for Swift )
+`rb Foo.handleBarChallenge -s playModule -N fooName`
 ##### Breakpoint naming
 `breakpoint set --selector blah:blah: -s objc_play -N fooName`
 ##### Breakpoint condition
