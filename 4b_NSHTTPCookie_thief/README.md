@@ -29,7 +29,20 @@ Your app process doesn't see the calls to `NSHTTPCookie` as they are being made 
 
 ![webkit_processes](/4b_NSHTTPCookie_thief/webkit_overview.png)
 
-### Find the Cookies
+## Find Cookies
+##### Check if WKWebView Cookies are persisted
+```
+(lldbinit) search WKWebsiteDataStore
+
+<WKWebsiteDataStore: 0x1c8057cd0>
+
+(lldbinit) expression id $wkdatastore = (id)0x1c8057cd0
+(lldbinit) po [$wkdatastore description]
+<WKWebsiteDataStore: 0x1c8057cd0>
+
+(lldbinit) po [$wkdatastore isPersistent]
+0x0000000000000001
+```
 ##### Stop WKWebView loading
 Breakpoint after WKWebView instantiated or before:
 ```
