@@ -131,7 +131,8 @@ Avoid using xCode if you are using the Python Debugger:
 `log enable gdb-remote packets`
 ##### Custom prompt
 `settings set prompt \-\>`
-
+##### Print with NSLog
+`exp (void)NSLog(@"😀foobar woobar");`  // on a real iOS device, you don't need to `caflush` for this to appear in `console.app`
 ## STDOUT
 If you use `lldb --wait-for` or `lldb -attach` you are attaching **after** a decision on where to send `stdout` was made.  For example:
 

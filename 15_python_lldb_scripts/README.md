@@ -17,6 +17,7 @@ SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swi
 ### SBValue is a friend
 ```
 >>> reg = lldb.frame.FindRegister("arg3")
+// reg is an SBValue
 
 >>> print(reg)
 (unsigned long) rdx = 0x00007ffeefbff598

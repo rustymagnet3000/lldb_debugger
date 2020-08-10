@@ -88,11 +88,12 @@ Enter expressions, then terminate with an empty line to evaluate:
 ##### Invoke the Block
 ```
 exp (void)[$a getAllCookies:$cookieThief]
-cont              // to watch the output in Console.app
+(lldb) caflush         // to watch the output in Console.app
 ```
 ##### Condensed expression
 ```
 (lldb) exp (void)[$alien getAllCookies:^(NSArray<NSHTTPCookie *> * _Nonnull cookies) {NSLog(@"All cookies %@",cookies);}];
+(lldb) caflush
 ```
 ##### References
 https://www.codeproject.com/Articles/1181358/Debugging-with-Xcode
