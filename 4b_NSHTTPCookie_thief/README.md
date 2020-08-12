@@ -1,23 +1,14 @@
 # 🍪 NSHTTPCookie Thief 🍪
-##### Debug App on Simulator without xCode
-```
-xcrun --sdk iphonesimulator lldb --attach-name tinyDormant --wait-for
+##### Install, attach and debug iOS app on real device from command line
+`ios-deploy -d -W -b <DerivedDatapath to app build>/Debug-iphoneos/tinyDormant.app`
 
-(lldb) cont
-// Visit page with Cookies
-
-(lldb) process interrupt
-
-(lldb) search WKHTTPCookieStore
-<WKHTTPCookieStore: 0x600001f5d300>
-```
-##### Search with Debugger for Cookie setter
+##### Attach to iOS Simulator app from command line
+`xcrun --sdk iphonesimulator lldb --attach-name tinyDormant --wait-for`
+##### Why are no image lookups, Breakpoints or Traces firing?
 ```
 (lldb) image lookup -n "+[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]"
 (lldb) image lookup -rn cookiesWithResponseHeaderFields
-```
-##### Why are no Breakpoints or Traces firing?
-```
+
 (lldb) b +[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]
 
 frida-trace -m "*[NSHTTPCookie initWithProperties:]" -p $mypid
@@ -68,7 +59,9 @@ Now `continue` the main app process.
 Bingo.  First time!
 
 ### Easier ways to find Cookies
-In Safari inspector - with a debuggable iOS app - you can view the Cookies inside a WKWebView Cookie store.  You enable `Developer` mode in Safari and the following setting on your iOS device.
+In Safari inspector - with a debuggable iOS app - you can view the Cookies inside a WKWebView Cookie store.  I had to download `Safari Technology Preview` from https://developer.apple.com/safari/download/ to get the `Cookies`, `network` and `Storage` tab.
+
+You enable `Developer` mode in Safari and the following setting on your iOS device.
 
 ![](/4b_NSHTTPCookie_thief/safari_cookie_inspector.png)
 
