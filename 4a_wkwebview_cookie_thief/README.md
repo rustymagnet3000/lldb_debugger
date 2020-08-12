@@ -1,12 +1,27 @@
 # 🍪 WKWebView Cookie Thief 🍪
 Use a debugger (`lldb`) to print all cookies inside a WKWebView cookie store.
 
-
 ![success](/4a_wkwebview_cookie_thief/b_cookie_thief.png)
 
+##### Summary
+```
+// Visit page with Cookies
+(lldb) process interrupt
 
+(lldb) settings set target.language objc
+
+(lldb) search WKHTTPCookieStore
+<WKHTTPCookieStore: 0x281eeee20>
+
+(lldb) exp id $cookies =(id)0x281eeee20
+
+(lldb) po [$cookies description]
+<WKHTTPCookieStore: 0x281eeee20>
+
+(lldb) po (void)[$cookies getAllCookies:^(NSArray * _Nonnull cookies) {NSLog(@"[*]Cookies inside of WKHTTPCookieStore: %@",cookies);}];
+```
 ## A Swift Cookie Thief
-The debugger could mimic the following code:
+The debugger (`lldb`) could mimic the following code:
 ```
 webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
             for cookie in cookies {
@@ -88,12 +103,7 @@ Enter expressions, then terminate with an empty line to evaluate:
 ##### Invoke the Block
 ```
 exp (void)[$a getAllCookies:$cookieThief]
-(lldb) caflush         // to watch the output in Console.app
-```
-##### Condensed expression
-```
-(lldb) exp (void)[$alien getAllCookies:^(NSArray<NSHTTPCookie *> * _Nonnull cookies) {NSLog(@"All cookies %@",cookies);}];
-(lldb) caflush
+(lldb) continue         // to watch the output in Console.app
 ```
 ##### References
 https://www.codeproject.com/Articles/1181358/Debugging-with-Xcode
