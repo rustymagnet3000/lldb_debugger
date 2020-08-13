@@ -4,6 +4,7 @@
 
 ##### Attach to iOS Simulator app from command line
 `xcrun --sdk iphonesimulator lldb --attach-name tinyDormant --wait-for`
+
 ##### Why are no image lookups, Breakpoints or Traces firing?
 ```
 (lldb) image lookup -n "+[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]"
@@ -21,6 +22,44 @@ Your app process doesn't see the calls to `NSHTTPCookie` as they are being made 
 ![webkit_processes](/4b_NSHTTPCookie_thief/webkit_overview.png)
 
 ## Find Cookies
+##### Find Cookies in Memory with Frida scrip "observeSomething"
+This works on a real device & iOS Simulator.
+
+```
+$) ps -ax | grep -i WebKit.Networking
+29163 ??         <longPath>/.../com.apple.WebKit.Networking
+
+$) frida --codeshare mrmacete/objc-method-observer -p 29163
+
+[PID::29163]-> %resume                           
+[PID::29163]-> observeSomething('*[* cookiesWithResponseHeaderFields:forURL:]');
+ ```
+ Results:
+ ```
++[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]
+ cookiesWithResponseHeaderFields: {
+     "Set-Cookie" = "EuConsent=<removed for brevity>; path=/; expires=Sat, 16 Nov 2019 14:51:01 GMT;";
+ } (__NSSingleEntryDictionaryI)
+ forURL: https://uk.yahoo.com/?p=us&guccounter=1 (NSURL)
+
+ RET: (
+     "<NSHTTPCookie
+ 	version:0
+ 	name:EuConsent
+ 	value:<removed for brevity>
+ 	expiresDate:'2019-11-16 14:51:01 +0000'
+ 	created:'2019-11-15 14:51:01 +0000'
+ 	sessionOnly:FALSE
+ 	domain:yahoo.com
+ 	partition:none
+ 	sameSite:none
+ 	path:/
+ 	isSecure:FALSE
+  path:"/" isSecure:FALSE>"
+ )
+```
+
+
 ##### Check if WKWebView Cookies are persisted
 ```
 (lldbinit) search WKWebsiteDataStore
