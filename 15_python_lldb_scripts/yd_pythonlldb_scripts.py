@@ -8,6 +8,7 @@ import lldb
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassURLSessionTrust yd_bypass_urlsession')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassExceptionPortCheck yd_bypass_exception_port_check')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloSmoke yd_hello_smoke')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_where_am_I')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDMachinePlatform yd_chip')
@@ -16,6 +17,28 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDThreadBeauty yd_thread_list')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFourRegisters yd_registers_top4')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintRegisters yd_registers_all')
+
+def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict):
+    """
+        A script to stop anti-debug code that works by detecting exception ports.
+        The plan is to set a breakpoint on b task_get_exception_ports.
+        Set it with the properties to write a register ( reg w rsi 0, on 86_64 ) and auto-continue
+        Print to logs, if it fires
+    """
+
+    frame = exe_ctx.frame
+    if frame is None:
+        result.SetError('[!]You must have the process suspended in order to execute this command')
+        return
+
+    debugger.HandleCommand('breakpoint set --name foo task_get_exception_ports')
+    debugger.HandleCommand('breakpoint modify --auto-continue true foo')
+    thread = frame.GetThread()
+    process = thread.GetProcess()
+    print("[*]Breakpoint set. Continue...  ")
+
+    process.Continue()
+
 
 
 def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
@@ -136,11 +159,10 @@ def YDGetBundleIdentifier(debugger, command, result, internal_dict):
     process = target.GetProcess()
     mainThread = process.GetThreadAtIndex(0)
     currentFrame = mainThread.GetSelectedFrame()
-    bundleIdentifier = currentFrame.EvaluateExpression(
-        "(NSString *)[[NSBundle mainBundle] bundleIdentifier]").GetObjectDescription()
-    print("[*] bundleIdentifier:: {}".format(type(bundleIdentifier)))
+    bundleIdentifier = currentFrame.EvaluateExpression("(NSString *)[[NSBundle mainBundle] bundleIdentifier]").GetObjectDescription()
+    print("[*]Bundle Identifier:")
     if not bundleIdentifier:
-        result.AppendMessage("[*] No bundle ID available. Did you stop before the AppDelegate?")
+        result.AppendMessage("[*]No bundle ID available. Did you stop before the AppDelegate?")
     result.AppendMessage(bundleIdentifier)
 
 
