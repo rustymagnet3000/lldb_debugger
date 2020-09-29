@@ -5,7 +5,7 @@
 ##### Attach to iOS Simulator app from command line
 `xcrun --sdk iphonesimulator lldb --attach-name tinyDormant --wait-for`
 
-##### Why are no image lookups, Breakpoints or Traces firing?
+##### Why are no image lookups, Breakpoints or Traces firing, with WKWebView?
 ```
 (lldb) image lookup -n "+[NSHTTPCookie cookiesWithResponseHeaderFields:forURL:]"
 (lldb) image lookup -rn cookiesWithResponseHeaderFields
@@ -22,7 +22,7 @@ Your app process doesn't see the calls to `NSHTTPCookie` as they are being made 
 ![webkit_processes](/4b_NSHTTPCookie_thief/webkit_overview.png)
 
 ## Find Cookies
-##### Find Cookies in Memory with Frida scrip "observeSomething"
+##### Find Cookies in Memory with Frida script "observeSomething" and WKWebView
 This works on a real device & iOS Simulator.
 
 ```
@@ -79,23 +79,39 @@ Breakpoint after WKWebView instantiated or before:
 self.webView.load(myRequest)
 ```
 ##### Get the correct Child Process ID
-After WKWebView has instantiated the `Child` webkit processes have spawned.
+After WKWebView object has instantiated, `Child` webkit processes spawn:
+```
+ 1820  0:00.28 /var/containers/Bundle/Application/<app id>/tinyDormant.app/tinyDormant
+ 1822  0:00.52 /System/Library/Frameworks/WebKit.framework/XPCServices/com.apple.WebKit.Networking.xpc/com.apple.W
+ 1823  0:01.27 /System/Library/Frameworks/WebKit.framework/XPCServices/com.apple.WebKit.WebContent.xpc/com.apple.W
+ 1824  0:00.03 /System/Library/Frameworks/WebKit.framework/XPCServices/com.apple.WebKit.Databases.xpc/com.apple.We
+```
+
+##### WebKit.Networking
+This process updates the web pages and persists them on the device inside the app's sandbox.
+
+`frida -l access.js -U -p 1822`
+
+You can see the cached web pages here:
+`/var/mobile/Containers/Data/Application/<GUID>/Library/Caches/WebKit/NetworkCache/Version 11/Blobs`
+
+Alternatively get the cookies from this child process:
+```
+frida-trace -m "*[NSHTTPCookie initWithProperties:]" -p 1822
+```
+##### WebKit.Databases
+`frida -l access.js -U -p 1824`
 
 ```
-mypid=$(ps -ax | grep -i WebKit.WebContent | grep -i Xcode | awk '{print $1}')
+[iPhone::PID::1824]-> exit[SNPS] They are searching for: /var/mobile/Containers/Data/Application/4A42C020-6684-4727-9E14-D5CD4C37A7FA/Library/WebKit/WebsiteData/IndexedDB/https_uk.news.yahoo.com_0/article-server
 
-echo $mypid
-1761
+Process is checking: /var/mobile/Containers/Data/Application/4A42C020-6684-4727-9E14-D5CD4C37A7FA/Library/WebKit/WebsiteData
+Process is checking: /var/mobile/Containers/Data/Application/4A42C020-6684-4727-9E14-D5CD4C37A7FA/Library/WebKit/WebsiteData/IndexedDB
+Process is checking: /var/mobile/Containers/Data/Application/4A42C020-6684-4727-9E14-D5CD4C37A7FA/Library/WebKit/WebsiteData/IndexedDB/https_uk.news.yahoo.com_0
+Process is checking: /var/mobile/Containers/Data/Application/4A42C020-6684-4727-9E14-D5CD4C37A7FA/Library/WebKit/WebsiteData/IndexedDB/https_uk.news.yahoo.com_0/article-server
+Process is checking: /var/mobile/Containers/Data/Application/4A42C020-6684-4727-9E14-D5CD4C37A7FA/Library/WebKit/WebsiteData/IndexedDB/https_uk.news.yahoo.com_0/article-server/IndexedDB.sqlite3-shm
+```
 
-```
-##### Set the Trace
-```
-frida-trace -m "*[NSHTTPCookie initWithProperties:]" -p 229
-```
-##### Continue Debugger
-Now `continue` the main app process.
-
-Bingo.  First time!
 
 ### Easier ways to find Cookies
 In Safari inspector - with a debuggable iOS app - you can view the Cookies inside a WKWebView Cookie store.  I had to download `Safari Technology Preview` from https://developer.apple.com/safari/download/ to get the `Cookies`, `network` and `Storage` tab.
