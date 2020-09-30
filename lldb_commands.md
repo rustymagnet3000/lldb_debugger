@@ -59,10 +59,15 @@ Usage: `po $arg2`
 ## Breakpoints
 ##### Getting the options
 `help breakpoint set`
+#####  Options to add script to Breakpoint
+`help break command add`
 ##### Delete all breakpoints
 `b delete`
 ##### List
 `b list`
+##### Breakpoint on Name and give the breakpoint a name
+`b -n task_get_exception_ports -N fooName --auto-continue true`
+
 ##### Breakpoint on Address ( gdb syntax )
 `b *0x1000016ce`
 ##### Breakpoint on Address with name (lldb syntax )
@@ -85,14 +90,17 @@ Usage: `po $arg2`
 `rb '\-\[UIViewController\ '`
 `rb '\-\[YDUser(\(\w+\))?\ '`
 `breakpoint set --func-regex=. --shlib=objc_play`
-#####  Understand options to add script to Breakpoint
-`help break command add`
+
 #####  Python script when Breakpoint fires
 ```
 (lldb) breakpoint command add -s python fooName
 Enter your Python command(s). Type 'DONE' to end.
     print("[!]found it")
     DONE
+```
+##### Callback to Python function when Breakpoint hits
+```
+(lldb) breakpoint command add -F ydscripts.YDHelloWorld fooName
 ```
 #####  Add & continue Python script when Breakpoint fires
 ```

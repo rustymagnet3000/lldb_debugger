@@ -9,7 +9,7 @@ import lldb
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassURLSessionTrust yd_bypass_urlsession')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassExceptionPortCheck yd_bypass_exception_port_check')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloSmoke yd_hello_smoke')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloWorld yd_hello_world')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_where_am_I')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDMachinePlatform yd_chip')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFrame yd_frame_print')
@@ -21,24 +21,31 @@ def __lldb_init_module(debugger, internal_dict):
 def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict):
     """
         A script to stop anti-debug code that works by detecting exception ports.
-        The plan is to set a breakpoint on b task_get_exception_ports.
-        Set it with the properties to write a register ( reg w rsi 0, on 86_64 ) and auto-continue
-        Print to logs, if it fires
+        The code sets a breakpoint on task_get_exception_ports.
+        Then it calls out to another Python function.
+        This other function overwrites a function parameter passed into task_get_exception_ports.
+        Print to logs, if it fires.
     """
-
     frame = exe_ctx.frame
     if frame is None:
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
-
     debugger.HandleCommand('b -n task_get_exception_ports -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -s python fooName')
-    message = "[*]Breakpoint set. Continue..."
-    thread = frame.GetThread()
-    process = thread.GetProcess()
-    process.Continue()
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDExceptionPortCode fooName')
+    message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
 
+def YDExceptionPortCode(sbframe, sbbreakpointlocation, dict):
+    hits = sbbreakpointlocation.GetHitCount()
+    arg2 = sbframe.FindRegister("arg2")
+    print("[*] 2nd argument:" + str(arg2.unsigned) + "\t" + sbframe.GetFunctionName() + "()")
+    print("[*] Hits=" + str(hits))
+    if arg2.unsigned > 0:
+        print "[!]Exception Ports were going to detect debugger. Turning off"
+        error = lldb.SBError()
+        result = sbframe.registers[0].GetChildMemberWithName('arg2').SetValueFromCString('0x0', error)
+        messages = {None: 'error', True: 'pass', False: 'fail'}
+        print ("[*]PATCHING result: " + messages[result])
 
 def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     """
@@ -140,14 +147,11 @@ def YDWhere(debugger, command, result, internal_dict):
         print("[*] Inside function: " + str(name))
         print("[*] line: " + str(lldb.frame.GetLineEntry().GetLine()))
 
-
-def YDHelloSmoke(debugger, command, result, internal_dict):
+def YDHelloWorld(frame, bp_loc, dict):
     """
-        HelloWorld, works regardless of where lldb stopped
+        HelloWorld function. Works, regardless of where lldb stopped.
     """
-    ci = debugger.GetCommandInterpreter()
-    res = lldb.SBCommandReturnObject()
-    ci.HandleCommand('script print "[*] Hello World smoke test"', res)
+    print("[*] Hello World")
 
 
 def YDGetBundleIdentifier(debugger, command, result, internal_dict):
