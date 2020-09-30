@@ -31,14 +31,13 @@ def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
 
-    debugger.HandleCommand('breakpoint set --name foo task_get_exception_ports')
-    debugger.HandleCommand('breakpoint modify --auto-continue true foo')
+    debugger.HandleCommand('b -n task_get_exception_ports -N fooName --auto-continue true')
+    debugger.HandleCommand('breakpoint command add -s python fooName')
+    message = "[*]Breakpoint set. Continue..."
     thread = frame.GetThread()
     process = thread.GetProcess()
-    print("[*]Breakpoint set. Continue...  ")
-
     process.Continue()
-
+    result.AppendMessage(message)
 
 
 def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
