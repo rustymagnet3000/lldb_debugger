@@ -57,6 +57,8 @@ Usage: `po $arg2`
 `po NSSelectorFromString($meth)`
 
 ## Breakpoints
+##### Getting the options
+`help breakpoint set`
 ##### Delete all breakpoints
 `b delete`
 ##### List
@@ -83,6 +85,8 @@ Usage: `po $arg2`
 `rb '\-\[UIViewController\ '`
 `rb '\-\[YDUser(\(\w+\))?\ '`
 `breakpoint set --func-regex=. --shlib=objc_play`
+#####  Understand options to add script to Breakpoint
+`help break command add`
 #####  Python script when Breakpoint fires
 ```
 (lldb) breakpoint command add -s python fooName
