@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # ----------------------------------------------------------------------
-#  load the script:  (lldb) command script import yd_pythonlldb_scripts.py
+#  load / reload script:  (lldb) command script import yd_pythonlldb_scripts.py
 # ----------------------------------------------------------------------
 import sys
 sys.path.append('/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python')
@@ -21,10 +21,10 @@ def __lldb_init_module(debugger, internal_dict):
 
 def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
     """
-        A script to stop anti-debug code that works by detecting ptrace.
+        A script to stop anti-debug ptrace code.
         The code sets a breakpoint on ptrace inside of libsystem_kernel.dylib.
         Then it calls out to another Python function.
-        This other function overwrites a function parameter passed into ptrace.
+        This function returns from the Thread without executing the ptrace call.
     """
     frame = exe_ctx.frame
     if frame is None:
@@ -35,15 +35,23 @@ def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
 
+def YDPatcher(frame, register, patch):
+    error = lldb.SBError()
+    result = frame.registers[0].GetChildMemberWithName(register).SetValueFromCString(patch, error)
+    messages = {None: 'error', True: 'PATCHED', False: 'fail'}
+    print ("[*]Result: " + messages[result])
+
 def YDPtraceCode(sbframe, sbbreakpointlocation, dict):
     hits = sbbreakpointlocation.GetHitCount()
-    ptrace_instruction = sbframe.FindRegister("arg1")
+    target_register = "arg1"
+    instruction = sbframe.FindRegister(target_register)
     function_name = sbframe.GetFunctionName()
-    thread_id = sbframe.GetThread().GetThreadID()
-    print("[*] stopped in:{0}\tHits={1}\tthread_id:{2}\tinstruction:{3}".format(function_name, str(hits), str(thread_id), str(ptrace_instruction.unsigned)))
-    if ptrace_instruction.unsigned > 0:
-        print("[!] PTrace was set to fail. PATCHING")
-        return 0x0
+    thread = sbframe.GetThread()
+    thread_id = thread.GetThreadID()
+    print("[*] stopped in:{0}\tHits={1}\tthread_id:{2}\tinstruction:{3}\tnum_frames:{4}".format(function_name, str(hits), str(thread_id), str(instruction.unsigned), thread.num_frames))
+    if instruction.unsigned > 0:
+        print("[!] PTrace was set to exit the app.")
+        YDPatcher(sbframe, target_register, '0x0')
 
 def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict):
     """
@@ -64,17 +72,13 @@ def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict
 
 def YDExceptionPortCode(sbframe, sbbreakpointlocation, dict):
     hits = sbbreakpointlocation.GetHitCount()
-    arg2 = sbframe.FindRegister("arg2")
-    print("[*] 2nd argument:" + str(arg2.unsigned) + "\t" + sbframe.GetFunctionName() + "()")
+    target_register = "arg2"
+    instruction = sbframe.FindRegister(target_register)
+    print("[*] 2nd argument:" + str(instruction.unsigned) + "\t" + sbframe.GetFunctionName() + "()")
     print("[*] Hits=" + str(hits))
-    if arg2.unsigned > 0:
+    if instruction.unsigned > 0:
         print "[!]Exception Ports were going to detect debugger. Turning off"
-        error = lldb.SBError()
-        result = sbframe.registers[0].GetChildMemberWithName('arg2').SetValueFromCString('0x0', error)
-        messages = {None: 'error', True: 'pass', False: 'fail'}
-        thread = sbframe.GetThread()
-        thread.StepOut()
-        print ("[*]StepOut ")
+        YDPatcher(sbframe, target_register, '0x0')
 
 def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     """
