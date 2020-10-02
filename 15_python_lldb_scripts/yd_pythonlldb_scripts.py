@@ -31,27 +31,40 @@ def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
     debugger.HandleCommand('b -F ptrace -s libsystem_kernel.dylib -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDPtraceCode fooName')
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDDebuggerPatching fooName')
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
+
 
 def YDPatcher(frame, register, patch):
     error = lldb.SBError()
     result = frame.registers[0].GetChildMemberWithName(register).SetValueFromCString(patch, error)
     messages = {None: 'error', True: 'PATCHED', False: 'fail'}
-    print ("[*]Result: " + messages[result])
+    print ("[*] Result: " + messages[result])
 
-def YDPtraceCode(sbframe, sbbreakpointlocation, dict):
+def YDDebuggerPatching(sbframe, sbbreakpointlocation, dict):
+    """
+        Function to patch out register values.
+        First looks up the calling Function Name.
+        Then calls out to function to find out what register to patch.
+    """
     hits = sbbreakpointlocation.GetHitCount()
-    target_register = "arg1"
-    instruction = sbframe.FindRegister(target_register)
     function_name = sbframe.GetFunctionName()
     thread = sbframe.GetThread()
     thread_id = thread.GetThreadID()
-    print("[*] stopped in:{0}\tHits={1}\tthread_id:{2}\tinstruction:{3}\tnum_frames:{4}".format(function_name, str(hits), str(thread_id), str(instruction.unsigned), thread.num_frames))
+    if function_name is 'task_get_exception_ports':
+        target_register = 'arg02'
+    elif function_name is 'ptrace':
+        target_register = 'arg01'
+    else:
+        target_register = 'arg01'
+    instruction = sbframe.FindRegister(target_register)
+    print("[*] target_register={0}\toriginal instruction:{1}".format(target_register, instruction))
+    print("[*] Hits={0}:{1}\n\t\tthread_id:{2}\tinstruction:{3}\tnum_frames:{4}".format(str(hits), function_name, str(thread_id), str(instruction.unsigned), thread.num_frames))
     if instruction.unsigned > 0:
         print("[!] PTrace was set to exit the app.")
         YDPatcher(sbframe, target_register, '0x0')
+
 
 def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict):
     """
@@ -66,19 +79,9 @@ def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
     debugger.HandleCommand('b -n task_get_exception_ports -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDExceptionPortCode fooName')
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDDebuggerPatching fooName')
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
-
-def YDExceptionPortCode(sbframe, sbbreakpointlocation, dict):
-    hits = sbbreakpointlocation.GetHitCount()
-    target_register = "arg2"
-    instruction = sbframe.FindRegister(target_register)
-    print("[*] 2nd argument:" + str(instruction.unsigned) + "\t" + sbframe.GetFunctionName() + "()")
-    print("[*] Hits=" + str(hits))
-    if instruction.unsigned > 0:
-        print "[!]Exception Ports were going to detect debugger. Turning off"
-        YDPatcher(sbframe, target_register, '0x0')
 
 def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     """
