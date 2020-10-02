@@ -9,6 +9,7 @@ import lldb
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassURLSessionTrust yd_bypass_urlsession')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassExceptionPortCheck yd_bypass_exception_port_check')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassPtraceSymbol yd_bypass_ptrace_symbol')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloWorld yd_hello_world')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_where_am_I')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDMachinePlatform yd_chip')
@@ -17,6 +18,32 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDThreadBeauty yd_thread_list')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFourRegisters yd_registers_top4')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintRegisters yd_registers_all')
+
+def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
+    """
+        A script to stop anti-debug code that works by detecting ptrace.
+        The code sets a breakpoint on ptrace inside of libsystem_kernel.dylib.
+        Then it calls out to another Python function.
+        This other function overwrites a function parameter passed into ptrace.
+    """
+    frame = exe_ctx.frame
+    if frame is None:
+        result.SetError('[!]You must have the process suspended in order to execute this command')
+        return
+    debugger.HandleCommand('b -F ptrace -s libsystem_kernel.dylib -N fooName --auto-continue true')
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDPtraceCode fooName')
+    message = ("[*]Breakpoint set. Continue...")
+    result.AppendMessage(message)
+
+def YDPtraceCode(sbframe, sbbreakpointlocation, dict):
+    hits = sbbreakpointlocation.GetHitCount()
+    ptrace_instruction = sbframe.FindRegister("arg1")
+    function_name = sbframe.GetFunctionName()
+    thread_id = sbframe.GetThread().GetThreadID()
+    print("[*] stopped in:{0}\tHits={1}\tthread_id:{2}\tinstruction:{3}".format(function_name, str(hits), str(thread_id), str(ptrace_instruction.unsigned)))
+    if ptrace_instruction.unsigned > 0:
+        print("[!] PTrace was set to fail. PATCHING")
+        return 0x0
 
 def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict):
     """
@@ -45,7 +72,9 @@ def YDExceptionPortCode(sbframe, sbbreakpointlocation, dict):
         error = lldb.SBError()
         result = sbframe.registers[0].GetChildMemberWithName('arg2').SetValueFromCString('0x0', error)
         messages = {None: 'error', True: 'pass', False: 'fail'}
-        print ("[*]PATCHING result: " + messages[result])
+        thread = sbframe.GetThread()
+        thread.StepOut()
+        print ("[*]StepOut ")
 
 def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     """
@@ -168,12 +197,14 @@ def YDGetBundleIdentifier(debugger, command, result, internal_dict):
         result.AppendMessage("[*]No bundle ID available. Did you stop before the AppDelegate?")
     result.AppendMessage(bundleIdentifier)
 
+def thread_printer_func (thread,unused):
+  return "Thread %s has %d frames\n" % (thread.name, thread.num_frames)
 
 def YDPrintFrame(debugger, command, result, internal_dict):
     target = debugger.GetSelectedTarget()
     process = target.GetProcess()
     thread = process.GetSelectedThread()
-
+    print("[*] Thread:{0}\tnum_frames={1}".format(thread.name, thread.num_frames))
     for frame in thread:
         if not frame.IsValid():
             print("[*] no frame here. did you stop too early?")
