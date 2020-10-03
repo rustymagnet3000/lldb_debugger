@@ -42,6 +42,16 @@ def YDPatcher(frame, register, patch):
     messages = {None: 'error', True: 'PATCHED', False: 'fail'}
     print ("[*] Result: " + messages[result])
 
+
+def setTargetRegister(fnc_name):
+    # type: (str) -> str
+    if 'task_get_exception_ports' in fnc_name:
+        return 'arg2'
+    elif 'ptrace' in fnc_name:
+        return 'arg1'
+    else:
+        return 'arg1'
+
 def YDDebuggerPatching(sbframe, sbbreakpointlocation, dict):
     """
         Function to patch out register values.
@@ -52,17 +62,12 @@ def YDDebuggerPatching(sbframe, sbbreakpointlocation, dict):
     function_name = sbframe.GetFunctionName()
     thread = sbframe.GetThread()
     thread_id = thread.GetThreadID()
-    if function_name is 'task_get_exception_ports':
-        target_register = 'arg02'
-    elif function_name is 'ptrace':
-        target_register = 'arg01'
-    else:
-        target_register = 'arg01'
+    target_register = setTargetRegister(function_name)
     instruction = sbframe.FindRegister(target_register)
     print("[*] target_register={0}\toriginal instruction:{1}".format(target_register, instruction))
     print("[*] Hits={0}:{1}\n\t\tthread_id:{2}\tinstruction:{3}\tnum_frames:{4}".format(str(hits), function_name, str(thread_id), str(instruction.unsigned), thread.num_frames))
     if instruction.unsigned > 0:
-        print("[!] PTrace was set to exit the app.")
+        print("[!] {} was set to exit the app.".format(function_name))
         YDPatcher(sbframe, target_register, '0x0')
 
 
