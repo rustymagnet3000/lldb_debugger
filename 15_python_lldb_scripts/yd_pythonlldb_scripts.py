@@ -26,15 +26,16 @@ def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
         Then it calls out to another Python function.
         This function returns from the Thread without executing the ptrace call.
     """
-    frame = exe_ctx.frame
+    frame = lldb.frame
     if frame is None:
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
     debugger.HandleCommand('b -F ptrace -s libsystem_kernel.dylib -N fooName --auto-continue true')
     debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDDebuggerPatching fooName')
-    message = ("[*]Breakpoint set. Continue...")
+    thread = frame.GetThread()
+    thread_id = thread.GetThreadID()
+    message = ("[*]Breakpoint set. Continue..thread_id:{}".format(str(thread_id)))
     result.AppendMessage(message)
-
 
 def YDPatcher(frame, register, patch):
     error = lldb.SBError()
@@ -118,7 +119,7 @@ def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
 
 def YDPrintFourRegisters(debugger, command, exe_ctx, result, internal_dict):
     """
-        Prints only four registers.
+        Prints the four registers often used to pass function parameters.
         Tries to print as decimal and then as char *.
         Uses $arg alias to make it work on x86_64 and arm64 ( iOS simulator / macOS / iOS device )
     """
@@ -131,7 +132,7 @@ def YDPrintFourRegisters(debugger, command, exe_ctx, result, internal_dict):
     for i in focalregisters:
         reg = frame.FindRegister(i)
         if reg.description is None:
-            print(i, reg.value)
+            print("[*]{0}\t:{1}\t\t:{2}".format(i, reg.value, reg.GetValueAsUnsigned()))
         else:
             print(i, reg.description)
 
@@ -188,18 +189,22 @@ def YDWhere(debugger, command, result, internal_dict):
         print("[*] Inside function: " + str(name))
         print("[*] line: " + str(lldb.frame.GetLineEntry().GetLine()))
 
-def YDHelloWorld(frame, bp_loc, dict):
+def YDHelloWorld(debugger, command, result, internal_dict):
     """
-        HelloWorld function. Works, regardless of where lldb stopped.
+        HelloWorld function. It will print "Hello World", regardless of where lldb stopped.
+        Auto-Continues after script has ran.
     """
-    print("[*] Hello World")
+    target = debugger.GetSelectedTarget()
+    process = target.GetProcess()
+    print("[*] Hello World from :{}".format(process))
+    process.Continue()
 
 
 def YDGetBundleIdentifier(debugger, command, result, internal_dict):
     """
         Prints the app's Bundle Identifier, if you stopped at a sensible point
     """
-    target = debugger.GetSelectedTarget()
+    target = debugger.GetSelectedTarget().GetProcess()
     process = target.GetProcess()
     mainThread = process.GetThreadAtIndex(0)
     currentFrame = mainThread.GetSelectedFrame()
@@ -208,6 +213,7 @@ def YDGetBundleIdentifier(debugger, command, result, internal_dict):
     if not bundleIdentifier:
         result.AppendMessage("[*]No bundle ID available. Did you stop before the AppDelegate?")
     result.AppendMessage(bundleIdentifier)
+    process.Continue()
 
 def thread_printer_func (thread,unused):
   return "Thread %s has %d frames\n" % (thread.name, thread.num_frames)
