@@ -14,9 +14,9 @@ SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swi
 
 (lldb) script lldb.debugger.HandleCommand("frame info")
 ```
-### SBValue is a friend
+### SBValue
 ```
->>> reg = lldb.frame.FindRegister("arg3")
+>>> reg = lldb.frame.FindRegister('arg1')
 // reg is an SBValue
 
 >>> print(reg)
@@ -24,6 +24,14 @@ SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swi
 
 >>> print(reg.value)
 0x00007ffeefbff598
+
+>>> d = reg.GetValue()
+
+>>> print(d)
+0x000000000000001a
+
+>>> type(d)
+<type 'str'>
 
 >>> print(reg.description)
 <__NSStackBlock__: 0x7000053adba8>
