@@ -36,8 +36,6 @@
 (lldb) search -r 0x0000000100610570
 __NSURLSessionLocal * [0x0000000100614d20] + 0x28
 ```
-##### Print text
-`script print "Hello"`
 ##### Registers (x86_64)
 Argument  | Register | Alias  
 --|---|--
@@ -49,8 +47,13 @@ Fourth  | RCX  | $arg4
 Fifth  | R8  |  $arg5
 Sixth  | R9  |  $arg6
 
-Usage: `po $arg2`
-
+##### Print
+`po $arg2`
+##### Convert Hex to Decimal
+```
+(lldb) p/d 0x1a
+(int) $2 = 26
+```
 ##### Create NSString
 `exp NSString *$myMethod = NSStringFromSelector(_cmd)`
 ##### Get Selector
@@ -75,6 +78,8 @@ Usage: `po $arg2`
 `b *0x1000016ce`
 ##### Breakpoint on Address with name (lldb syntax )
 `br s -a 0x1000016ce -N fooName`
+##### Breakpoint on Register value ( SVC calls )
+`b set -N fooName --auto-continue true -c $x16==26`
 ##### Breakpoint on Selector
 `breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:`
 ##### Breakpoint on Selector in Module
