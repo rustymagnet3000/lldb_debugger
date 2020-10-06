@@ -211,15 +211,27 @@ def YDWhere(debugger, command, result, internal_dict):
         print("[*] Inside function: " + str(name))
         print("[*] line: " + str(lldb.frame.GetLineEntry().GetLine()))
 
-def YDHelloWorld(debugger, command, result, internal_dict):
+
+def YDAutoContinue(debugger, result):
     """
-        HelloWorld function. It will print "Hello World", regardless of where lldb stopped.
         Auto-Continues after script has ran.
+        debugger.SetAsync(True) allows a clean auto-continue. lldb can run in two modes "synchronous" or "asynchronous".
+        Tell lldb the function restarted the target with lldb.eReturnStatusSuccessContinuingNoResult.
     """
     target = debugger.GetSelectedTarget()
     process = target.GetProcess()
-    print("[*] Hello World from :{}".format(process))
+    result.SetStatus(lldb.eReturnStatusSuccessContinuingNoResult)
+    debugger.SetAsync(True)
     process.Continue()
+
+
+def YDHelloWorld(debugger, command, result, internal_dict):
+    """
+        HelloWorld function. It will print "Hello World", regardless of where lldb stopped.
+    """
+    print("[*] Hello World")
+    YDAutoContinue(debugger, result)
+
 
 
 def YDGetBundleIdentifier(debugger, command, result, internal_dict):

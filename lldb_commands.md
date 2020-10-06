@@ -37,15 +37,16 @@
 __NSURLSessionLocal * [0x0000000100614d20] + 0x28
 ```
 ##### Registers (x86_64)
-Argument  | Register | Alias  
---|---|--
-Return  | RAX  | $rax
-First  | RDI  | $arg1
-Second  | RSI  | $arg2
-Third  |  RDX |  $arg3
-Fourth  | RCX  | $arg4  
-Fifth  | R8  |  $arg5
-Sixth  | R9  |  $arg6
+Argument  | Register | x86_64  | arm64
+--|---|--|--
+Return  | -  | RAX | -
+First  | arg1 | RDI | x0
+Second  | arg2 | RSI | x1
+Third  |  arg3| RDX |  x2
+Fourth  | arg4 | RCX  | x3
+Fifth  | arg5 | R8  | x4
+Sixth  | arg6 |  arg6 | x5
+Syscalls  | - | syscall  | x16
 
 ##### Print
 `po $arg2`
