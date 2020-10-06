@@ -25,6 +25,9 @@ SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swi
 >>> print(reg.value)
 0x00007ffeefbff598
 
+>>> print(reg.GetValueAsUnsigned())
+26
+
 >>> d = reg.GetValue()
 
 >>> print(d)
@@ -73,15 +76,6 @@ Swift-4.1
 >>> print lldb.debugger.GetSelectedTarget()
 SampleApp-Swift
 ```
-### Print Register value
-```
->>> reg = lldb.frame.FindRegister("arg3")
->>> print(reg)
-(unsigned long) rdx = 0x00007ffeefbff598
->>> print(reg.GetValue())
-0x00007ffeefbff598
-```
-
 
 ### Well placed Breakpoint
 ```
