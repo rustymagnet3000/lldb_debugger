@@ -1,4 +1,6 @@
 ## LLDB References
+#### Man page
+http://lldb.llvm.org/man/lldb.html
 #### Patching code
 https://www.inovex.de/blog/lldb-patch-your-code-with-breakpoints/
 #### ASM arm instructions
