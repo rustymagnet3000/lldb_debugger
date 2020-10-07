@@ -136,7 +136,16 @@ Enter your Python command(s). Type 'DONE' to end.
 >>> for a in range(0x1000016bc, 0x1000016d1):
 ... 	lldb.target.BreakpointCreateByAddress(a)
 ```
-##### Watchpoint
+
+## Memory
+##### Read five instructions after address
+`memory read --format instruction --count 5 0x10463d970`
+##### Find String in memory range
+`mem find -s "youtube" -- 0x00000107744000 0x00000107d48000`
+##### Read 100 bytes from address
+`memory read -c100 0x10793362c`
+
+## Watchpoint
 ```
 watchpoint set variable completionHandler
 watchpoint set expression -- $esi
@@ -145,7 +154,7 @@ help watchpoint set variable
 watchpoint list
 watch del 1
 ```
-##### lldb iOS Simulators
+### lldb iOS Simulators
 Avoid using xCode if you are using the Python Debugger:
 ```
 - Kill xcode
@@ -153,7 +162,7 @@ Avoid using xCode if you are using the Python Debugger:
 - run a `ps -ax` to find your PID
 - `$ lldb -p <PID>`
 ```
-## Advanced
+### Advanced
 ##### Logging
 `settings set target.process.extra-startup-command QSetLogging:bitmask=LOG_ALL;`
 ##### Watch Packets ( caution )
@@ -162,7 +171,7 @@ Avoid using xCode if you are using the Python Debugger:
 `settings set prompt \-\>`
 ##### Print with NSLog
 `exp (void)NSLog(@"😀foobar woobar");`  // on a real iOS device, you don't need to `caflush` for this to appear in `console.app`
-## STDOUT
+### STDOUT
 If you use `lldb --wait-for` or `lldb -attach` you are attaching **after** a decision on where to send `stdout` was made.  For example:
 
 ```
