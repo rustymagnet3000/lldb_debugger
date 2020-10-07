@@ -1,18 +1,15 @@
 # LLDB Commands
+### Getting started
 ##### Launch
 `lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is app name
-##### Where am I?
-`frame info`
-##### Which Thread am I on?
-`thread list`
-##### Disassemble by address
-`disas -s 0x00001620`
-##### Disassemble by function name
-`disas -n Foo.Bar`
 ##### Import lldb script
 `command source <file_path>/lldb_script.txt`
 ##### Import Python script
 `command script import <file_path>/lldb_python.py`
+##### Frame
+`frame info`
+##### Thread
+`thread list`
 ##### Brief list of attached Libraries
 `image list -b`
 ##### Sections of all loaded code
@@ -36,7 +33,16 @@
 (lldb) search -r 0x0000000100610570
 __NSURLSessionLocal * [0x0000000100614d20] + 0x28
 ```
-##### Registers (x86_64)
+### Disassemble
+##### By address
+`disas -s 0x00001620`
+##### By function name
+`disas -n Foo.Bar`
+##### By ObjC method
+`disas -n "+[YDFileChecker asmSyscallFunction:]"`
+
+
+### Registers
 Argument  | Register | x86_64  | arm64
 --|---|--|--
 Return  | -  | RAX | -
@@ -45,16 +51,14 @@ Second  | arg2 | RSI | x1
 Third  |  arg3| RDX |  x2
 Fourth  | arg4 | RCX  | x3
 Fifth  | arg5 | R8  | x4
-Sixth  | arg6 |  arg6 | x5
+Sixth  | arg6 |  R9 | x5
 Syscalls  | - | syscall  | x16
 
-##### Print
+### Print
+##### Register
 `po $arg2`
-##### Convert Hex to Decimal
-```
-(lldb) p/d 0x1a
-(int) $2 = 26
-```
+##### Hex to Decimal
+`(lldb) p/d 0x1a        // (int) $2 = 26`
 ##### Create NSString
 `exp NSString *$myMethod = NSStringFromSelector(_cmd)`
 ##### Get Selector
@@ -77,6 +81,10 @@ Syscalls  | - | syscall  | x16
 `b -n task_get_exception_ports -N fooName --auto-continue true`
 ##### Breakpoint on Address ( gdb syntax )
 `b *0x1000016ce`
+##### Breakpoint on ObjC Class Method
+`b "+[YDFileChecker foobar:]"`
+##### Breakpoint on Function, name the breakpoint and set condition
+`br set -b "+[YDFileChecker foobar:]" -N fooName  -c "$arg1 == 0x33"`
 ##### Breakpoint on Address with name (lldb syntax )
 `br s -a 0x1000016ce -N fooName`
 ##### Breakpoint on Register value ( SVC calls )
