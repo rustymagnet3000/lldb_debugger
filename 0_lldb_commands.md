@@ -146,25 +146,43 @@ Enter your Python command(s). Type 'DONE' to end.
 `memory read -c100 0x10793362c`
 
 ## Watchpoint
-```
-watchpoint set variable completionHandler
-watchpoint set expression -- $esi
-help watchpoint set
-help watchpoint set variable
-watchpoint list
-watch del 1
-```
-### lldb iOS Simulators
-Avoid using xCode if you are using the Python Debugger:
+##### Help
+`help watchpoint set`
+##### watchpoint list
+`watchpoint list`
+##### watchpoint delete
+`watch del 1`
+##### watchpoint on Global variable
+`watchpoint set variable file_exists`
+##### Once it stops
+`po file_exists = NO`
+##### watchpoint on frame variable
+`watchpoint set variable completionHandler`
+##### watchpoint on address in function
+`watchpoint set expression -w write -- "+[YDFileChecker checkFileExists]" + 32`
+##### watchpoint on register
+`watchpoint set expression -- $arg1`
+##### watchpoint on register
+`watchpoint set expression -w read_write -- $arg1`
+
+### Settings
+##### show target.run-args
+`settings show target.run-args`
+##### show target.env-vars
+`settings show target.env-vars`
+##### Add setting to lldbinit file
+`echo "settings set target.x86-disassembly-flavor intel" >> ~/.lldbinit`
+##### Logging
+`settings set target.process.extra-startup-command QSetLogging:bitmask=LOG_ALL;`
+
+### Advanced
+### lldb command line ( no XCode )
 ```
 - Kill xcode
 - Run iOS app in the simulator
 - run a `ps -ax` to find your PID
 - `$ lldb -p <PID>`
 ```
-### Advanced
-##### Logging
-`settings set target.process.extra-startup-command QSetLogging:bitmask=LOG_ALL;`
 ##### Watch Packets ( caution )
 `log enable gdb-remote packets`
 ##### Custom prompt
