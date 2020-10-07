@@ -41,13 +41,12 @@ __NSURLSessionLocal * [0x0000000100614d20] + 0x28
 ##### By ObjC method
 `disas -n "+[YDFileChecker asmSyscallFunction:]"`
 
-
 ### Registers
 Argument  | Register | x86_64  | arm64
 --|---|--|--
 Return  | -  | RAX | -
 First  | arg1 | RDI | x0
-Second  | arg2 | RSI | x1
+Second  | arg2 | c | x1
 Third  |  arg3| RDX |  x2
 Fourth  | arg4 | RCX  | x3
 Fifth  | arg5 | R8  | x4
@@ -58,13 +57,17 @@ Syscalls  | - | syscall  | x16
 ##### Register
 `po $arg2`
 ##### Hex to Decimal
-`(lldb) p/d 0x1a        // (int) $2 = 26`
+`p/d 0x1a        // (int) $2 = 26`
+##### Create char *
+`po char *$new`
+##### Check for substring in a register
+`po $new = (char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi))`
 ##### Create NSString
 `exp NSString *$myMethod = NSStringFromSelector(_cmd)`
 ##### Get Selector
 `po NSSelectorFromString($meth)`
 
-## Breakpoints
+### Breakpoints
 ##### Getting the options
 `help breakpoint set`
 #####  Options to add script to Breakpoint
@@ -73,6 +76,8 @@ Syscalls  | - | syscall  | x16
 `b delete`
 ##### List
 `b list`
+##### Breakpoint on symbol name
+`b syscall`
 ##### Breakpoint on fullname
 `breakpoint set -F access`
 ##### Breakpoint on fullname in a single Module
@@ -87,8 +92,10 @@ Syscalls  | - | syscall  | x16
 `br set -b "+[YDFileChecker foobar:]" -N fooName  -c "$arg1 == 0x33"`
 ##### Breakpoint on Address with name (lldb syntax )
 `br s -a 0x1000016ce -N fooName`
-##### Breakpoint on Register value ( SVC calls )
+##### Break on Register value ( SVC calls )
 `b set -N fooName --auto-continue true -c $x16==26`
+##### Break on Register holding Info.plist substring
+`br s -n syscall -c '(char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi)) != NULL'`
 ##### Breakpoint on Selector
 `breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:`
 ##### Breakpoint on Selector in Module
@@ -137,7 +144,7 @@ Enter your Python command(s). Type 'DONE' to end.
 ... 	lldb.target.BreakpointCreateByAddress(a)
 ```
 
-## Memory
+### Memory
 ##### Read five instructions after address
 `memory read --format instruction --count 5 0x10463d970`
 ##### Find String in memory range
@@ -145,7 +152,7 @@ Enter your Python command(s). Type 'DONE' to end.
 ##### Read 100 bytes from address
 `memory read -c100 0x10793362c`
 
-## Watchpoint
+### Watchpoint
 ##### Help
 `help watchpoint set`
 ##### watchpoint list
@@ -164,6 +171,8 @@ Enter your Python command(s). Type 'DONE' to end.
 `watchpoint set expression -- $arg1`
 ##### watchpoint on register
 `watchpoint set expression -w read_write -- $arg1`
+##### Delete some watchpoints, if you see this error
+`error: sending gdb watchpoint packet failed`
 
 ### Settings
 ##### show target.run-args
