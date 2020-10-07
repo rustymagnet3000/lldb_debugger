@@ -12,7 +12,7 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassPtraceSymbol yd_bypass_ptrace_symbol')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassPtraceSyscall yd_bypass_ptrace_syscall')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloWorld yd_hello_world')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_where_am_I')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_where')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDMachinePlatform yd_chip')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFrame yd_frame_print')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDGetBundleIdentifier yd_bundle_id')
@@ -27,7 +27,7 @@ def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
         Then it calls out to another Python function.
         This function returns from the Thread without executing the ptrace call.
     """
-    frame = lldb.frame
+    frame = exe_ctx.frame
     if frame is None:
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
@@ -45,7 +45,7 @@ def YDBypassPtraceSyscall(debugger, command, exe_ctx, result, internal_dict):
         A script to stop anti-debug ptrace code, when the call is written in assembler.
         The code sets a breakpoint on ptrace inside of libsystem_kernel.dylib.
     """
-    frame = lldb.frame
+    frame = exe_ctx.frame
     if frame is None:
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
@@ -150,7 +150,7 @@ def YDPrintFourRegisters(debugger, command, exe_ctx, result, internal_dict):
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
 
-    focalregisters = ['arg0', 'arg1', 'arg2', 'arg3', 'arg4']
+    focalregisters = ['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'args8']
     for i in focalregisters:
         reg = frame.FindRegister(i)
         if reg.description is None:
@@ -200,16 +200,17 @@ def YDMachinePlatform(debugger, command, result, internal_dict):
     result.AppendMessage(triple_name)
 
 
-def YDWhere(debugger, command, result, internal_dict):
+def YDWhere(debugger, command, exe_ctx, result, internal_dict):
     """
         Print the function where you have stopped
     """
-    name = lldb.frame.GetFunctionName()
-    if not lldb.frame.IsValid():
+    frame = exe_ctx.frame
+    name = frame.GetFunctionName()
+    if not frame.IsValid():
         return ("no frame here")
     else:
         print("[*] Inside function: " + str(name))
-        print("[*] line: " + str(lldb.frame.GetLineEntry().GetLine()))
+        print("[*] line: " + str(frame.GetLineEntry().GetLine()))
 
 
 def YDAutoContinue(debugger, result):
