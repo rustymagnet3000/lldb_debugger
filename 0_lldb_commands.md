@@ -1,5 +1,7 @@
 # LLDB Commands
 ### Getting started
+##### Check versions ( python, lldb )
+`script import sys; print(sys.version)`
 ##### Launch
 `lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is app name
 ##### Import lldb script

@@ -19,6 +19,30 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDThreadBeauty yd_thread_list')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFourRegisters yd_registers_top4')
     debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintRegisters yd_registers_all')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDDLSymbolSnooper yd_dlsym_snooper')
+
+def YDDLSymbolSnooper(debugger, command, exe_ctx, result, internal_dict):
+    """
+        Snoop on dlsym().  Useful to understand how an iOS app starts.
+    """
+    frame = exe_ctx.frame
+    if frame is None:
+        result.SetError('[!]You must have the process suspended in order to execute this command')
+        return
+    debugger.HandleCommand('b -F dlsym -s libdyld.dylib -N fooName --auto-continue true')
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDPrettyPrint fooName')
+    message = ("[*]Breakpoint set. Continue...")
+    result.AppendMessage(message)
+    YDAutoContinue(debugger, result)
+
+def YDPrettyPrint(frame, sbbreakpointlocation, dict):
+    """
+        dlsym() returns the address of the code or data location specified by the symbol.
+        String of name always in $arg2 register.
+    """
+    symbol_name = frame.FindRegister('arg2').GetValue()
+    print("[*] Symbol={0}".format(symbol_name))
+
 
 def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
     """
@@ -33,9 +57,7 @@ def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
         return
     debugger.HandleCommand('b -F ptrace -s libsystem_kernel.dylib -N fooName --auto-continue true')
     debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDDebuggerPatching fooName')
-    thread = frame.GetThread()
-    thread_id = thread.GetThreadID()
-    message = ("[*]Breakpoint set. Continue..thread_id:{}".format(str(thread_id)))
+
     result.AppendMessage(message)
 
 
