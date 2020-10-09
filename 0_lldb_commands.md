@@ -147,6 +147,8 @@ Enter your Python command(s). Type 'DONE' to end.
 ```
 
 ### Memory
+##### Read the string that is pointed to by a char* pointer
+`memory read 0x00007fff36d99fb5`
 ##### Read five instructions after address
 `memory read --format instruction --count 5 0x10463d970`
 ##### Find String in memory range

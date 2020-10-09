@@ -3,6 +3,8 @@
 http://lldb.llvm.org/man/lldb.html
 #### Patching code
 https://www.inovex.de/blog/lldb-patch-your-code-with-breakpoints/
+#### LLDB-Python script with excellent examples
+https://rderik.com/blog/scanning-a-process-memory-using-lldb/
 #### ASM arm instructions
 https://armconverter.com/
 #### iOS Syscalls
