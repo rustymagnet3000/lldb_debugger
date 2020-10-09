@@ -41,12 +41,18 @@ def YDCStringPrinter(frame, sbbreakpointlocation, dict):
         In the $arg2 register you always have a pointer to a const char * that is located in the Data section of binary.
         With the pointer can then call SBProcess.ReadCStringFromMemory
     """
-    symbol_str_address = frame.FindRegister('arg2')
+    function_name = frame.GetFunctionName()
+    target_register = setTargetRegister(function_name)
+    symbol_str_address = frame.FindRegister(target_register)
     thread = frame.GetThread()
     process = thread.GetProcess()
     error = lldb.SBError()
     c_string = process.ReadCStringFromMemory(int(symbol_str_address.GetValue(), 16), 256, error)
-    print("[*] dlsym for:({0})".format(c_string))
+    if not error.Success():
+        print(error)
+        return None
+    else:
+        print("[*] dlsym for:({0})".format(c_string))
 
 
 def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
@@ -97,6 +103,8 @@ def setTargetRegister(fnc_name):
         return 'arg2'
     elif 'ptrace' in fnc_name:
         return 'arg1'
+    elif 'dlsym' in fnc_name:
+        return 'arg2'
     elif 'syscall' in fnc_name:
         return 'arg2'
     else:
