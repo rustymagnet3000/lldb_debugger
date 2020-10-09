@@ -30,18 +30,23 @@ def YDDLSymbolSnooper(debugger, command, exe_ctx, result, internal_dict):
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
     debugger.HandleCommand('b -F dlsym -s libdyld.dylib -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDPrettyPrint fooName')
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDCStringPrinter fooName')
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
     YDAutoContinue(debugger, result)
 
-def YDPrettyPrint(frame, sbbreakpointlocation, dict):
+def YDCStringPrinter(frame, sbbreakpointlocation, dict):
     """
         dlsym() returns the address of the code or data location specified by the symbol.
-        String of name always in $arg2 register.
+        In the $arg2 register you always have a pointer to a const char * that is located in the Data section of binary.
+        With the pointer can then call SBProcess.ReadCStringFromMemory
     """
-    symbol_name = frame.FindRegister('arg2').GetValue()
-    print("[*] Symbol={0}".format(symbol_name))
+    symbol_str_address = frame.FindRegister('arg2')
+    thread = frame.GetThread()
+    process = thread.GetProcess()
+    error = lldb.SBError()
+    c_string = process.ReadCStringFromMemory(int(symbol_str_address.GetValue(), 16), 256, error)
+    print("[*] dlsym for:({0})".format(c_string))
 
 
 def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
