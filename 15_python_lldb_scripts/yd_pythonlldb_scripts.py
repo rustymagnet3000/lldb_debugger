@@ -7,21 +7,22 @@ sys.path.append('/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framewor
 import lldb
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassURLSessionTrust yd_bypass_urlsession')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassExceptionPortCheck yd_bypass_exception_port_check')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassPtraceSymbol yd_bypass_ptrace_symbol')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDBypassPtraceSyscall yd_bypass_ptrace_syscall')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDHelloWorld yd_hello_world')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDWhere yd_where')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDMachinePlatform yd_chip')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFrame yd_frame_print')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDGetBundleIdentifier yd_bundle_id')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDThreadBeauty yd_thread_list')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintFourRegisters yd_registers_top4')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDPrintRegisters yd_registers_all')
-    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.YDDLSymbolSnooper yd_dlsym_snooper')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__bypass_urlsession_trust yd_bypass_urlsession')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__bypass_exception_port_check yd_bypass_exception_port_check')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__bypass_ptrace_symbol yd_bypass_ptrace_symbol')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__bypass_ptrace_syscall yd_bypass_ptrace_syscall')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__hello_world yd_hello_world')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__where yd_where')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__machine_platform yd_chip')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__get_bundle_id yd_bundle_id')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__frame_beautify yd_pretty_frame')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__thread_beautify yd_pretty_thread_list')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__print_four_registers yd_registers_top4')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__print_registers yd_registers_all')
+    debugger.HandleCommand('command script add -f yd_pythonlldb_scripts.__dl_symbol_snooper yd_dlsym_snooper')
 
-def YDDLSymbolSnooper(debugger, command, exe_ctx, result, internal_dict):
+
+def __dl_symbol_snooper(debugger, command, exe_ctx, result, internal_dict):
     """
         Snoop on dlsym().  Useful to understand how an iOS app starts.
     """
@@ -30,19 +31,19 @@ def YDDLSymbolSnooper(debugger, command, exe_ctx, result, internal_dict):
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
     debugger.HandleCommand('b -F dlsym -s libdyld.dylib -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDCStringPrinter fooName')
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.__cstring_printer fooName')
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
-    YDAutoContinue(debugger, result)
+    __auto_continue(debugger, result)
 
-def YDCStringPrinter(frame, sbbreakpointlocation, dict):
+def __cstring_printer(frame, sbbreakpointlocation, dict):
     """
         dlsym() returns the address of the code or data location specified by the symbol.
         In the $arg2 register you always have a pointer to a const char * that is located in the Data section of binary.
         With the pointer can then call SBProcess.ReadCStringFromMemory
     """
     function_name = frame.GetFunctionName()
-    target_register = setTargetRegister(function_name)
+    target_register = __set_target_register(function_name)
     symbol_str_address = frame.FindRegister(target_register)
     thread = frame.GetThread()
     process = thread.GetProcess()
@@ -55,7 +56,7 @@ def YDCStringPrinter(frame, sbbreakpointlocation, dict):
         print("[*] dlsym for:({0})".format(c_string))
 
 
-def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
+def __bypass_ptrace_symbol(debugger, command, exe_ctx, result, internal_dict):
     """
         A script to stop anti-debug ptrace code.
         The code sets a breakpoint on ptrace inside of libsystem_kernel.dylib.
@@ -67,13 +68,11 @@ def YDBypassPtraceSymbol(debugger, command, exe_ctx, result, internal_dict):
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
     debugger.HandleCommand('b -F ptrace -s libsystem_kernel.dylib -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDDebuggerPatching fooName')
-
-    result.AppendMessage(message)
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.__prepare_patch fooName')
 
 
 
-def YDBypassPtraceSyscall(debugger, command, exe_ctx, result, internal_dict):
+def __bypass_ptrace_syscall(debugger, command, exe_ctx, result, internal_dict):
     """
         A script to stop anti-debug ptrace code, when the call is written in assembler.
         The code sets a breakpoint on ptrace inside of libsystem_kernel.dylib.
@@ -83,21 +82,21 @@ def YDBypassPtraceSyscall(debugger, command, exe_ctx, result, internal_dict):
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
     debugger.HandleCommand('b -F syscall -s libsystem_kernel.dylib -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.YDDebuggerPatching fooName')
+    debugger.HandleCommand('breakpoint command add -F yd_pythonlldb_scripts.__prepare_patch fooName')
     thread = frame.GetThread()
     thread_id = thread.GetThreadID()
     message = ("[*]Breakpoint set. Continue..thread_id:{}".format(str(thread_id)))
     result.AppendMessage(message)
 
 
-def YDPatcher(frame, register, patch):
+def __final_patch(frame, register, patch):
     error = lldb.SBError()
     result = frame.registers[0].GetChildMemberWithName(register).SetValueFromCString(patch, error)
     messages = {None: 'error', True: 'PATCHED', False: 'fail'}
     print ("[*] Result: " + messages[result])
 
 
-def setTargetRegister(fnc_name):
+def __set_target_register(fnc_name):
     # type: (str) -> str
     if 'task_get_exception_ports' in fnc_name:
         return 'arg2'
@@ -110,7 +109,7 @@ def setTargetRegister(fnc_name):
     else:
         return 'arg1'
 
-def YDDebuggerPatching(sbframe, sbbreakpointlocation, dict):
+def __prepare_patch(sbframe, sbbreakpointlocation, dict):
     """
         Function to patch register values.
         First looks up the calling Function Name.
@@ -121,15 +120,15 @@ def YDDebuggerPatching(sbframe, sbbreakpointlocation, dict):
     function_name = sbframe.GetFunctionName()
     thread = sbframe.GetThread()
     thread_id = thread.GetThreadID()
-    target_register = setTargetRegister(function_name)
+    target_register = __set_target_register(function_name)
     instruction = sbframe.FindRegister(target_register)
     print("[*] target_register={0}\toriginal instruction:{1}".format(target_register, instruction))
     print("[*] Hits={0}:{1} (\t\tthread_id:{2}\tinstruction:{3}\tnum_frames:{4})".format(str(hits), function_name, str(thread_id), str(instruction.unsigned), thread.num_frames))
     if instruction.unsigned > 0:
-        YDPatcher(sbframe, target_register, '0x0')
+        __final_patch(sbframe, target_register, '0x0')
 
 
-def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict):
+def __bypass_exception_port_check(debugger, command, exe_ctx, result, internal_dict):
     """
         A script to stop anti-debug code that works by detecting exception ports.
         The code sets a breakpoint on task_get_exception_ports.
@@ -146,7 +145,7 @@ def YDBypassExceptionPortCheck(debugger, command, exe_ctx, result, internal_dict
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
 
-def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
+def __bypass_urlsession_trust(debugger, command, exe_ctx, result, internal_dict):
     """
         Sets the NSURLSessionAuthChallengeDisposition to Default.
         Requires user to stop when the $RSI register contained the NSURLSessionAuthChallengeDisposition.
@@ -174,7 +173,7 @@ def YDBypassURLSessionTrust(debugger, command, exe_ctx, result, internal_dict):
     process.Continue()
 
 
-def YDPrintFourRegisters(debugger, command, exe_ctx, result, internal_dict):
+def __print_four_registers(debugger, command, exe_ctx, result, internal_dict):
     """
         Prints the four registers often used to pass function parameters.
         Tries to print as decimal and then as char *.
@@ -185,15 +184,15 @@ def YDPrintFourRegisters(debugger, command, exe_ctx, result, internal_dict):
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
 
-    focalregisters = ['arg0', 'arg1', 'arg2', 'arg3', 'arg4', 'args8']
-    for i in focalregisters:
+    focal_registers = ['arg0', 'arg1', 'arg2', 'arg3', 'arg4']
+    for i in focal_registers:
         reg = frame.FindRegister(i)
         if reg.description is None:
             print("[*]{0}\t:{1}\t\t:{2}".format(i, reg.value, reg.GetValueAsUnsigned()))
         else:
             print(i, reg.description)
 
-def YDPrintRegisters(debugger, command, exe_ctx, result, internal_dict):
+def __print_registers(debugger, command, exe_ctx, result, internal_dict):
     """
         Prints registers. Variant of https://lldb.llvm.org/python_reference/lldb.SBValue-class.html
         Good way to show how using exe_ctx to get the Register values
@@ -205,8 +204,8 @@ def YDPrintRegisters(debugger, command, exe_ctx, result, internal_dict):
         return
 
     print("[*]Frame " + str(frame))
-    registerset = frame.registers # Returns an SBValueList.
-    for regs in registerset:
+    register_set = frame.registers # Returns an SBValueList.
+    for regs in register_set:
         if 'general purpose registers' in regs.name.lower():
             GPRs = regs
             break
@@ -215,7 +214,7 @@ def YDPrintRegisters(debugger, command, exe_ctx, result, internal_dict):
     for reg in GPRs:
         print(reg.name, ' Value: ', reg.value)
 
-def printChipType(target):
+def __print_chip_type(target):
     # type: (SBObject) -> void
     if 'x86_64' in target:
         print('[*]simulator 64 bit')
@@ -225,17 +224,17 @@ def printChipType(target):
         print('[*]arm 32 bit')
 
 
-def YDMachinePlatform(debugger, command, result, internal_dict):
+def __machine_platform(debugger, command, result, internal_dict):
     """
         Get the chip underneath the O/S. Required to check Assembler instructions.
     """
     target = debugger.GetSelectedTarget()
     triple_name = target.GetTriple()
-    printChipType(triple_name)
+    __print_chip_type(triple_name)
     result.AppendMessage(triple_name)
 
 
-def YDWhere(debugger, command, exe_ctx, result, internal_dict):
+def __where(debugger, command, exe_ctx, result, internal_dict):
     """
         Print the function where you have stopped
     """
@@ -248,7 +247,7 @@ def YDWhere(debugger, command, exe_ctx, result, internal_dict):
         print("[*] line: " + str(frame.GetLineEntry().GetLine()))
 
 
-def YDAutoContinue(debugger, result):
+def __auto_continue(debugger, result):
     """
         Auto-Continues after script has ran.
         debugger.SetAsync(True) allows a clean auto-continue. lldb can run in two modes "synchronous" or "asynchronous".
@@ -261,34 +260,28 @@ def YDAutoContinue(debugger, result):
     process.Continue()
 
 
-def YDHelloWorld(debugger, command, result, internal_dict):
+def __get_bundle_id(debugger, command, result, internal_dict):
     """
-        HelloWorld function. It will print "Hello World", regardless of where lldb stopped.
+        Prints the app's Bundle Identifier, if you stopped at the app fully loaded
     """
-    print("[*] Hello World")
-    YDAutoContinue(debugger, result)
-
-
-
-def YDGetBundleIdentifier(debugger, command, result, internal_dict):
-    """
-        Prints the app's Bundle Identifier, if you stopped at a sensible point
-    """
-    target = debugger.GetSelectedTarget().GetProcess()
+    target = debugger.GetSelectedTarget()
     process = target.GetProcess()
     mainThread = process.GetThreadAtIndex(0)
     currentFrame = mainThread.GetSelectedFrame()
-    bundleIdentifier = currentFrame.EvaluateExpression("(NSString *)[[NSBundle mainBundle] bundleIdentifier]").GetObjectDescription()
+    bundle_id = currentFrame.EvaluateExpression("(NSString *)[[NSBundle mainBundle] bundleIdentifier]").GetObjectDescription()
     print("[*]Bundle Identifier:")
-    if not bundleIdentifier:
+    if not bundle_id:
         result.AppendMessage("[*]No bundle ID available. Did you stop before the AppDelegate?")
-    result.AppendMessage(bundleIdentifier)
-    process.Continue()
+    result.AppendMessage(bundle_id)
 
-def thread_printer_func (thread,unused):
+
+def __thread_printer_func(thread):
   return "Thread %s has %d frames\n" % (thread.name, thread.num_frames)
 
-def YDPrintFrame(debugger, command, result, internal_dict):
+def __frame_beautify(debugger, command, result, internal_dict):
+    """
+        Prints a prettier frame
+    """
     target = debugger.GetSelectedTarget()
     process = target.GetProcess()
     thread = process.GetSelectedThread()
@@ -300,10 +293,17 @@ def YDPrintFrame(debugger, command, result, internal_dict):
             print >> result, str(frame)
 
 
-def YDThreadBeauty(debugger, command, result, internal_dict):
+def __thread_beautify(debugger, command, result, internal_dict):
     """
         Prints a prettier thread list
     """
     debugger.HandleCommand(
         'settings set  thread-format \"thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n\"')
     debugger.HandleCommand('thread list')
+
+def __hello_world(debugger, command, result, internal_dict):
+    """
+        HelloWorld function. It will print "Hello World", regardless of where lldb stopped.
+    """
+    print("[*] Hello World")
+    __auto_continue(debugger, result)
