@@ -6,10 +6,6 @@ import lldb
 from console import Console
 
 def __lldb_init_module(debugger, internal_dict):
-    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_urlsession_trust yd_bypass_urlsession')
-    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_exception_port_check yd_bypass_exception_port_check')
-    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_ptrace_symbol yd_bypass_ptrace_symbol')
-    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_ptrace_syscall yd_bypass_ptrace_syscall')
     debugger.HandleCommand('command script add -f python_lldb_scripts.__hello_world yd_hello_world')
     debugger.HandleCommand('command script add -f python_lldb_scripts.__where yd_where')
     debugger.HandleCommand('command script add -f python_lldb_scripts.__machine_platform yd_chip')
@@ -20,15 +16,24 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f python_lldb_scripts.__print_registers yd_registers_all')
     debugger.HandleCommand('command script add -f python_lldb_scripts.__dl_symbol_snooper yd_dlsym_snooper')
     debugger.HandleCommand('command script add -f python_lldb_scripts.__hw_class yd_class')
+    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_urlsession_trust yd_bypass_urlsession')
+    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_exception_port_check yd_bypass_exception_port_check')
+    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_ptrace_symbol yd_bypass_ptrace_symbol')
+    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_ptrace_syscall yd_bypass_ptrace_syscall')
+    debugger.HandleCommand('command script add -f python_lldb_scripts.__bypass_sysctl_symbol yd_bypass_sysctl_symbol')
 
-def __hw_class(debugger, command, exe_ctx, result, internal_dict):
+def __bypass_sysctl_symbol(debugger, command, exe_ctx, result, internal_dict):
     """
-        Hello world class creator. Should import into lldb without any seperate `command script import` statements
+        A script to stop anti-debug sysctl code.
+        The code sets a breakpoint on ptrace inside of libsystem_kernel.dylib.
+        Then it calls out to another Python function.
     """
-    Console.banner('!')
-    Console.single_value('hello world ')
-    my_list = ['alice','bob','yves']
-    Console.single_list(my_list)
+    frame = exe_ctx.frame
+    if frame is None:
+        result.SetError('[!]You must have the process suspended in order to execute this command')
+        return
+    debugger.HandleCommand('b -F sysctl -s libsystem_kernel.dylib -N fooName --auto-continue true')
+    debugger.HandleCommand('breakpoint command add -F python_lldb_scripts.__prepare_patch fooName')
 
 
 def __dl_symbol_snooper(debugger, command, exe_ctx, result, internal_dict):
@@ -44,6 +49,7 @@ def __dl_symbol_snooper(debugger, command, exe_ctx, result, internal_dict):
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
     __auto_continue(debugger, result)
+
 
 def __cstring_printer(frame, sbbreakpointlocation, dict):
     """
@@ -70,7 +76,6 @@ def __bypass_ptrace_symbol(debugger, command, exe_ctx, result, internal_dict):
         A script to stop anti-debug ptrace code.
         The code sets a breakpoint on ptrace inside of libsystem_kernel.dylib.
         Then it calls out to another Python function.
-        This function returns from the Thread without executing the ptrace call.
     """
     frame = exe_ctx.frame
     if frame is None:

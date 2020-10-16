@@ -47,3 +47,5 @@ https://knight.sc/debugging/2018/08/15/macos-kernel-debugging.html
 http://www.secretmango.com/jimb/Whitepapers/ptrace/ptrace.html
 #### anti-debug code samples
 https://gist.github.com/joswr1ght/fb8c9f4f3f9a2feebf7f https://www.theiphonewiki.com/wiki/Bugging\_Debuggers
+#### lldb and Blocks
+https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/WorkingwithBlocks/WorkingwithBlocks.html
