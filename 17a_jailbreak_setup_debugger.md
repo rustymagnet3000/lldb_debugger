@@ -13,6 +13,19 @@
 ##### Electra Jailbreak
 Electra shipped with a `debug-server`. Previous jailbreaks had lots of manual steps to get the correct `debug-server` onto the device.
 ![electra](images/2019/06/IMG_0069.png)
+
+
+##### Electra app will not open
+If you have a full Apple iOS developer license, you can code-sign `ad-hoc` apps to last one year. If the `Electra app` won't open, you can re-code sign the `ipa file`.  One way to achieve this:
+
+ - Open `Cydia Impactor`
+ - Select `\Device\InstallPackage`
+ - Find the `Electra.ipa` file
+ - When prompted by `Cydia Impactor` enter your Apple ID.
+ - Do **NOT** enter your password.  Go to https://appleid.apple.com/ and generate a `APP-SPECIFIC PASSWORD`
+
+Now `Electra` will work for another year.
+
 ##### Electra specifics
 When you select `Tweaks`, Electra runs the `debug-server` from a different path:
 ```
