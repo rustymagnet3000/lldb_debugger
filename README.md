@@ -1,6 +1,7 @@
-
+## The LLDB Debugger
 <!-- TOC depthFrom:2 depthTo:3 withLinks:1 updateOnSave:1 orderedList:0 -->
 
+- [The LLDB Debugger](#the-lldb-debugger)
 	- [Getting started](#getting-started)
 	- [Disassemble](#disassemble)
 	- [Registers](#registers)
@@ -19,14 +20,6 @@
 <!-- /TOC -->
 
 ### Getting started
-##### Check versions ( python, lldb )
-`script import sys; print(sys.version)`
-##### Launch
-`lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is app name
-##### Import lldb script
-`command source <file_path>/lldb_script.txt`
-##### Import Python script
-`command script import <file_path>/lldb_python.py`
 ##### Frame
 `frame info`
 ##### Thread
@@ -458,6 +451,15 @@ Make sure you add the `$` sign before a variable. Else you will hit:
 
 
 ### Advanced
+##### Check versions ( python, lldb )
+`script import sys; print(sys.version)`
+##### Launch
+`lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is app name
+##### Import lldb script
+`command source <file_path>/lldb_script.txt`
+##### Import Python script
+`command script import <file_path>/lldb_python.py`
+
 ##### lldb command line ( no XCode )
 ```
 - Kill xcode
