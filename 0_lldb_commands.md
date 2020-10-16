@@ -147,10 +147,18 @@ Enter your Python command(s). Type 'DONE' to end.
 ```
 
 ### Memory
+
 ##### Read the string that is pointed to by a char* pointer
 `memory read 0x00007fff36d99fb5`
 ##### Read five instructions after address
 `memory read --format instruction --count 5 0x10463d970`
+##### Get start and end of search
+```
+(lldb) section
+[0x0000010462c000-0x00000107744000] 0x0003118000 MyApp`__TEXT
+[0x00000107744000-0x00000107d48000] 0x0000604000 MyApp`__DATA
+/* removed sections for brevity */
+```
 ##### Find String in memory range
 `mem find -s "youtube" -- 0x00000107744000 0x00000107d48000`
 ##### Read 100 bytes from address
@@ -227,3 +235,243 @@ $) lldb
 (lldb) exp (void)NSLog(@"hello");
 2018-12-13 10:14:09.638801+0000 objc_playground_2[2776:61771] hello
 ```
+
+### Scripts
+```
+command alias yd_reload_lldbinit command source ~/.lldbinit
+command script import /usr/local/opt/chisel/libexec/fblldb.py   // https://github.com/facebook/chisel
+command script import ~/lldb_commands/dslldb.py                 // https://github.com/DerekSelander/LLDB
+```
+### Aliases
+##### extend your commands
+```
+command alias -h "Run a command in the UNIX shell." -- yd_shell platform shell
+command alias -h "add: <search_term> -m module" yd_lookup lookup -X (?i)
+command alias yd_dump image dump symtab -m C_Playground
+```
+##### Beautify
+```
+settings show thread-format
+command alias yd_thread_beautify settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
+command alias yd_register_beautify register read -f d
+```
+##### lldb context
+```
+command alias yd_smoke exp let $z = 5
+command alias yd_swift settings set target.language swift
+command alias yd_objc settings set target.language objc
+command alias yd_c settings set target.language c
+command alias yd_stack_vars frame variable --no-args
+```
+##### lldb over USB
+```
+command alias yd_attach process connect connect://localhost:6666
+```
+
+### lldb and Objective-C Blocks
+##### lldb "Hello World" Block
+```
+(lldb) exp
+1 void (^$simpleBlock)(void) = ^{
+2 NSLog(@"hello from a block!");
+3 };
+4
+
+(lldb) po $simpleBlock()
+[1136:66563] hello from a block!
+```
+##### While Loop inside a Block
+```
+(lldb) expression
+1 void (^$helloWhile)(int) =
+2 ^(int a) {
+3 while(a <10) {
+4 printf("Hello %d\n", a);
+5 a++;
+6 }};
+
+(lldb) po $helloWhile(2)
+Hello 2
+Hello 3
+Hello 4
+......
+```
+##### Add two numbers with a Block
+```
+(lldb) expression
+1 int (^$add)(int, int) =
+2 ^(int a, int b) { return a+b; }
+
+(lldb) p $add(3,4)
+(int) $0 = 7
+
+(lldb) po $add
+0x0000000101424110
+
+(lldb) p $add
+(int (^)(int, int)) $add = 0x0000000101424110
+```
+
+##### Void Block
+```
+po void (^$fakeBlock)(int, NSURLCredential * _Nullable) =^(int a, NSURLCredential *b) {NSLog(@"hello. Original enum was set to %d", a);}
+
+po $fakeBlock(2,0)
+```
+##### Use Global Dispatch Block
+```
+(lldb) expression
+1 dispatch_sync(dispatch_get_global_queue(0,0),
+         ^(){ printf("Hello world\n"); });
+```
+##### Calling the Block with a Name
+```
+A more complicated example that gives the Block a name so it can be called like a function.
+
+(lldb) exp
+1 double (^$multiplyTwoValues)(double, double) =
+2 ^(double firstValue, double secondValue) {
+3 return firstValue * secondValue;
+4 };
+5
+
+(lldb) po $multiplyTwoValues(2,4)
+8
+
+
+(lldb) exp double $result
+(lldb) p $result
+(double) $result = 0
+(lldb) exp $result = $multiplyTwoValues(2,4)
+(double) $1 = 8
+(lldb) po $result
+8
+```
+
+##### Get the syntax
+```
+(lldb) expression
+Enter expressions, then terminate with an empty line to evaluate:
+1 void(^$remover)(id, NSUInteger, BOOL *) = ^(id string, NSUInteger i,BOOL *stop){
+2 NSLog(@"ID: %lu String: %@", (unsigned long)i, string);
+3 };
+4
+
+(lldb) p $remover
+(void (^)(id, NSUInteger, BOOL *)) $remover = 0x00000001021a4110
+
+(lldb) exp [oldStrings enumerateObjectsUsingBlock:$remover]
+
+ID: 0 String: odd
+ID: 1 String: raygun
+ID: 2 String: whoop whoop
+3 String: doctor pants
+```
+
+## lldb with C code
+##### malloc / strcpy
+Create a malloc char array, copy with strcpy, and free.
+```
+(lldb) e char *$str = (char *)malloc(8)
+(lldb) e (void)strcpy($str, "munkeys")
+(lldb) e $str[1] = 'o'
+(lldb) p $str
+(char *) $str = 0x00000001c0010460 "monkeys"
+```
+##### Warm-up - getenv
+```
+(lldb) e const char *$home = NULL
+(lldb) p *$home
+error: Couldn't apply expression side effects : Couldn't dematerialize a result variable: couldn't read its memory
+(lldb) e $home = getenv("HOME")
+(const char *) $3 = 0x00007ffeefbff8d2 "/Users/foobar"
+(lldb) po $home
+"/Users/foobar"
+(lldb) p $home
+(const char *) $home = 0x00007ffeefbff8d2 "/Users/foobar"
+```
+##### Examine
+```
+(lldb) malloc_info --type 0x1c0010480
+[+][+][+][+] The string is in the heap!  [+][+][+][+]
+
+(lldb) memory read 0x00000001c0010460
+```
+##### Free
+```
+(lldb) e (void)free($str)
+```
+##### Print Bool
+```
+(lldb) po (bool) result
+<object returned empty description>
+
+(lldb) p result
+(bool) $2 = true
+
+(lldb) p/x result
+(bool) $0 = 0x01
+
+(lldb) exp result = false
+(bool) $1 = false
+
+(lldb) p/x result
+(bool) $2 = 0x00
+
+(lldb) p/t result
+(bool) $4 = 0b00000000
+
+(lldb) exp result = true
+(bool) $5 = true
+
+(lldb) p/t result
+(bool) $6 = 0b00000001
+```
+##### Print Char Array
+```
+(lldb) po (char*) message
+"AAAA"
+
+(lldb) po message
+"AAAA"
+
+(lldb) p message
+(char *) $5 = 0x0000000100000fa9 "AAAA"
+
+(lldb) p *message
+(char) $1 = 'A'
+```
+##### Struct initialize
+```
+(lldb) expr struct YD_MENU_ITEMS $menu = {.menu_option = "a", .description = "all items"};
+
+(lldb) expr struct VERSION_INFO $b
+error: typedef 'VERSION_INFO' cannot be referenced with a struct specifier
+
+(lldb) expr VERSION_INFO $b
+(lldb) p $b
+(VERSION_INFO) $b = (Major = 0, Minor = 0, Build = 0)
+```
+##### Enum initialize
+```
+(lldb) expr PAS_RESULT $a
+(lldb) po $a
+<nil>
+(lldb) p $a
+(PAS_RESULT) $a = 0
+(lldb) exp $a = 2
+(PAS_RESULT) $0 = 2
+```
+##### Cast return types
+The flexibility of `void *` is a great tool.  If you don't know how to cast the return handle, you can just point it to the garbage.
+```
+(lldb) exp (void*) getCurrentVersion(&$b);
+(void *) $2 = 0x0000000000000000
+(lldb) p $b
+(VERSION_INFO) $b = (Major = 4, Minor = 6, Build = 13)
+```
+
+##### Banana Skins
+Make sure you add the `$` sign before a variable. Else you will hit:
+
+`error: warning: got name from symbols: b`
