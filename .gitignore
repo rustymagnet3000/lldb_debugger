@@ -1,5 +1,6 @@
 # Custom YD additions
 python_lldb_scripts/.idea
+.gitignore
 #
 # Xcode
 #
