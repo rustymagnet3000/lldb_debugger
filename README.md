@@ -12,17 +12,21 @@
 - [Settings](#settings)
 - [Scripts](#scripts)
 - [Aliases](#aliases)
-- [Objective C](#objective-c)
-- [lldb and Objective-C Blocks](#lldb-and-objective-c-blocks)
+- [lldb with Swift](#lldb-with-swift)
+- [lldb with Objective C](#lldb-with-objective-c)
+- [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
 - [lldb with C code](#lldb-with-c-code)
 - [Advanced](#advanced)
 - [stdout](#stdout)
-- [lldb - playing with screens](#lldb-playing-with-screens)
+- [Playing with the User Interface](#playing-with-the-user-interface)
 - [Facebook's Chisel](#facebooks-chisel)
 - [Thread Pause / Thread Exit](#thread-pause-thread-exit)
-- [Output](#output)
 - [help lldb by setting the language](#help-lldb-by-setting-the-language)
 - [lldb & rootless](#lldb-rootless)
+- [lldb bypass Certificate Pinning](#lldb-bypass-certificate-pinning)
+- [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
+- [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
+- [lldb lifting code ( iOS app )](#lldb-lifting-code-ios-app-)
 
 <!-- /TOC -->
 
@@ -255,49 +259,134 @@ command alias yd_objc settings set target.language objc
 command alias yd_c settings set target.language c
 command alias yd_stack_vars frame variable --no-args
 ```
+
 ##### lldb over USB
 `command alias yd_attach process connect connect://localhost:6666`
 
-
-### Objective C
-#### Initializing Classes
-The following bit of code gets your age in seconds.   You validate the answer at https://www.epochconverter.com/.  This code shows:
-
-- `alloc` gives pointer to new a object that needs to be initialized
-- `alloc` and `init` the most common pattern in Objective-C
-- `new` a shorthand way of writing `alloc` and `init`
-- `initWithCalendarIdentifier` after `alloc` initialize with a custom `init` call
-
-The following article suggests: `new = alloc + init`
-https://stackoverflow.com/questions/11256228/what-is-the-difference-between-class-new-and-class-alloc-init-in-ios/11256311
+### lldb with Swift
 ```
-#import <Foundation/Foundation.h>
+class lyftClass {
 
-int main(int argc, const char * argv[]) {
-    @autoreleasepool {
+    static let request_number = 1
+    static let uri = "https://my.url/"
+    let app_version = "app_99"
 
-        NSDate *today = [NSDate new];
-
-        NSDateComponents *comps = [[NSDateComponents alloc]init];
-        comps.day = 1;
-        comps.year = 1999;
-        comps.month = 1;
-        comps.hour = 18;
-        NSCalendar *g = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-
-        NSDate *mydob = [g dateFromComponents:comps];
-
-        NSLog(@"Pointer to my dob: %p and today: %p", mydob, today);
-        double time_alive = [today timeIntervalSinceDate: mydob];
-        NSLog(@"I have been alive for this many seconds %.0f", time_alive);
+    func facebook() -> Int {
+        return 96
     }
-    return 0;
-}
 
+    static func google() -> Int {
+        return 42
+    }
+}
 ```
-#### Classes
+
+##### Invoking code from a Framework or the main application ?
+If you are invoking code from a Swift dynamic framework, make sure to tell lldb about the Framework.  Below is why...
 ```
-#import <Foundation/Foundation.h>
+(lldb) exp let $a = RustyAppInfo()
+error: <EXPR>:3:10: error: use of unresolved identifier 'RustyAppInfo'
+let $a = RustyAppInfo()
+       ^~~~~~~~~~~~
+
+(lldb) expr -- import rusty_nails
+(lldb) exp let $a = RustyAppInfo()
+// success. now you have a class instant.
+```
+lldb knew I was trying to write swift code. In an iOS app, where you have Swift and Objective-C code, I always find it useful to type:
+
+`(lldb) settings set target.language swift`
+##### Connect to app via lldb
+I liked to put a breakpoint on the the AppDelegate class.  If you let the app load, the context of Swift is automagically lost by lldb.
+##### Print your class
+```
+(lldb) po lyftClass()
+<lyftClass: 0x60c000051dc0>
+```
+##### Create a class instance
+`expression let $lyft = rusty.lyftClass()`
+##### Invoke a member function from instance class
+`po $lyft.app_version()`       
+##### Try and print a Class member
+```
+po $lyft.request_number
+error: <EXPR>:3:1: error: static member 'uri' cannot be used on instance of type 'lyftClass'
+```
+This fails as it is a Static class member and not accessible to the instantiated class.
+##### Print a Class member
+```
+(lldb) po lyftClass.uri
+"https://my.url/"
+```
+##### Print Class function member
+```
+(lldb) po lyftClass.google()
+42
+```
+##### Invoke Swift Class with Initializers
+```
+class lyftClass {
+
+    static let url = "https://my.url/"
+    let version = "app_99.0"
+    let mickey: String
+    let mouse: Int
+
+    init(mickey: String, mouse: Int) {
+        self.mickey = mickey
+        self.mouse = mouse
+    }
+
+    convenience init(mickey: String){
+        self.init(mickey: mickey, mouse: 100)
+    }
+
+    func facebook_string() -> String {
+        return "jibber jabber"
+    }
+
+    static func google_int() -> Int {
+        return 42
+    }
+}
+```
+##### Create a class instance
+```
+(lldb) expression let $a = lyftClass()
+error: <EXPR>:3:10: error: cannot invoke initializer for type 'lyftClass' with no arguments
+
+<EXPR>:3:10: note: overloads for 'lyftClass' exist with these partially matching parameter lists: (mickey: String, mouse: Int), (mickey: String)
+let $a = lyftClass()
+```
+##### Invoke a function from instant class
+```
+(lldb) expression let $b = lyftClass(mickey: "zer", mouse: 500)
+(lldb) po $b
+<lyftClass: 0x60c000284470>
+
+(lldb) po $b.mickey
+"zer"
+
+(lldb) po $b.mouse
+500   
+```
+##### Create Class with convenience initializer
+```
+(lldb) expression let $a = lyftClass(mickey: "wow")
+(lldb) po $a
+<lyftClass: 0x60000009b580>
+(lldb) po $a.mickey
+"wow"
+(lldb) po $a.mouse
+100
+```
+
+
+
+### lldb with Objective C
+##### Classes
+```
+@import Foundation;
 
 @interface Box:NSObject {
     double length;    // Length of a box
@@ -378,7 +467,6 @@ I could have easily written:
 20
 ```
 #### Invoke Instance Method with several parameters
-I found some of the Objective-C syntax odd. Where is the major label in the below API?
 ```
 - (void)getVersion:(int*)num1 minor:(int*)num2 patch:(int*)num3;
 
@@ -400,7 +488,6 @@ hello string
 (lldb) po (NSData*) $data
 <74657374 73747269 6e67>
 
-// just like in C, you have to encoded based on whether you had a null terminated string or not.
 (lldb) exp NSString* $newStr = [[NSString alloc] initWithData:$data encoding:NSUTF8StringEncoding];
 (lldb) po $newStr
 hello string
@@ -415,101 +502,26 @@ hello string
 (lldb) print $myflag
 (BOOL) $myflag = YES
 ```
-#### Properties - save some code
-To avoid specifying setter and getter functions, you can use @property in the Interface file and @synthesize in the implementation file.
+### lldb with Objective-C Blocks
+##### Write Block
 ```
-#import <Foundation/Foundation.h>
+--> remember, Blocks are on the Stacks. So if your debugger moves around and you created a Block it won't be available ( if you changed Frames / Stacks )
 
-@interface User : NSObject
-{
-    NSString *_firstName;
-}
-    @property (nonatomic, strong)NSString *firstName;
-@end
-
-@implementation User
-    @synthesize firstName = _firstName;
-@end
-
-int main () {
-
-    User *user = [[User alloc] init];
-    user.firstName = @"Hook";
-    NSLog(@"the captain is: %@", user.firstName);
-    return 0;
-}
-```
-
-#### Static Properties
-```
-@interface User : NSObject
-    @property (class, nonatomic, assign, readonly) NSInteger userCount;
-    @property (class, nonatomic, copy) NSUUID *identifier;
-    + (void)resetIdentifier;
-@end
-
-@implementation User
-    static NSUUID *_identifier = nil;
-    static NSInteger _userCount = 0;
-
-    + (NSInteger)userCount {
-        return _userCount;
-    }
-
-    + (NSUUID *)identifier {
-        if (_identifier == nil) {
-            _identifier = [[NSUUID alloc] init];
-        }
-        return _identifier;
-    }
-
-    + (void)setIdentifier:(NSUUID *)newIdentifier {
-        if (newIdentifier != _identifier) {
-            _identifier = [newIdentifier copy];
-        }
-    }
-
-    - (instancetype)init
-    {
-        self = [super init];
-        if (self) {
-            _userCount += 1;
-        }
-        return self;
-    }
-
-    + (void)resetIdentifier {
-        _identifier = [[NSUUID alloc] init];
-    }
-@end
-
-int main () {
-
-    User *user;
-    for (int i = 0; i < 3; i++) {
-        user = [[User alloc] init];
-        NSLog(@"User count: %ld",(long)User.userCount);
-        NSLog(@"Identifier = %@",User.identifier);
-    }
-
-    [User resetIdentifier];
-    NSLog(@"Identifier = %@",User.identifier);
-    return 0;
-}
-```
-
-
-### lldb and Objective-C Blocks
-##### lldb "Hello World" Block
-```
 (lldb) exp
 1 void (^$simpleBlock)(void) = ^{
-2 NSLog(@"hello from a block!");
+2 (void)NSLog(@"hello from a block!");
 3 };
 4
-
+```
+##### Call Block
+```
 (lldb) po $simpleBlock()
 [1136:66563] hello from a block!
+```
+##### Get Pointer to Block
+```
+(lldb) po $simpleBlock        // get pointer to Block
+(void (^)()) $simpleBlock = 0x00000001025a9900
 ```
 ##### While Loop inside a Block
 ```
@@ -759,7 +771,7 @@ $) lldb
 2018-12-13 10:14:09.638801+0000 objc_playground_2[2776:61771] hello
 ```
 
-### lldb - playing with screens
+### Playing with the User Interface
 #### lldb - print all View Controllers connected to current hierarchy
 `(lldb) po [[[UIWindow keyWindow] rootViewController] _printHierarchy]`
 
@@ -1085,7 +1097,7 @@ shark: 4
 jelly: 4
 Program ended with exit code: 0
 ```
-### Output
+##### Output
 ```
  (lldb) settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
  (lldb) thread list
@@ -1153,4 +1165,344 @@ Apple's *[System Integrity Protection][5909c6c8]*
 $ sudo lldb -n Finder
 (lldb) process attach —name "Finder"
 /* fails if you don't disable Rootless */
+```
+
+### lldb bypass Certificate Pinning
+##### Bypass overview
+_"Do I trust the server,  before sending data?"_.  You will often find that question in iOS and Android app code.  It refers to `certificate pinning`.
+
+The below script overwrites the answer to that question.  The bypass requires a debugger (`lldb`) a scripting language (`python`) and writing values in memory (`registers`).
+
+##### Result
+```
+(lldb) br s -a 0x1000013ae -N fooName
+Breakpoint 2: where = objc_play`-[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:] + 334 at main.m:19:5, address = 0x00000001000013ae
+
+(lldb) c
+Process 48838 resuming
+🍭Start
+🍭Challenged on: www.google.com
+🍭Cert chain length: 3
+
+(lldb) yd_bypass_urlsession       // run custom Python LLDB script
+
+[*]URLSession trust bypass started
+[*]Original of NSURLSessionAuthChallengeDisposition: (unsigned long) rsi = 0x0000000000000002
+[!]NSURLSessionAuthChallengeDisposition set to Cancel.
+[*]PATCHING result: pass
+🍭HTTP Response Code: 200
+🍭finish
+```
+#### Background
+App's often used a `completionHandler` with Apple's `NSURLSession` on iOS and macOS when deciding whether to start a `network request`.  
+
+> completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, NULL);
+
+The above line of code is typical of an app that has implemented `Certificate Pinning` and has decided to stop the network request from being sent.  
+
+##### Find the Needle in the Haystack
+If you ingested the executable file into a disassembler like **Hopper**, you could find the `assembly instruction` to patch out the answer.  
+
+Hopper had a really nice pseudo code flow of: `URLSession:didReceiveChallenge:completionHandler:`:
+```
+/* @class YDURLSessionDel */
+-(void)URLSession:(void *)arg2 didReceiveChallenge:(void *)arg3 completionHandler:(void *)arg4 {
+    var_30 = [[arg3 protectionSpace] serverTrust];
+    [[arg3 protectionSpace] host];
+    NSLog(cfstring___m__);
+    SecTrustGetCertificateCount(var_30);
+    NSLog(cfstring___m__);
+    (*(arg4 + 0x10))(arg4, 0x2, 0x0, arg4);
+    return;
+}
+```
+We care about the line: `(*(arg4 + 0x10))(arg4, 0x2, 0x0, arg4);`.
+
+In assembly, that is this instruction:
+```
+0x1000016ce <+174>: call   qword ptr [rcx + 0x10]
+```
+Sure enough, if you set a `breakpoint` on this `instruction`:
+```
+(lldb) po $arg1
+<__NSStackBlock__: 0x7000050deba8>
+ signature: "v24@?0q8@"NSURLCredential"16"
+ invoke   : 0x7fff30e47a04 (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFHTTPCookieStorageUnscheduleFromRunLoop)
+ copy     : 0x7fff30d3b7ed (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
+ dispose  : 0x7fff30d3b825 (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
+
+(lldb) po $arg2
+2
+
+(lldb) po $arg3
+<nil>
+
+(lldb) po $arg4
+<__NSStackBlock__: 0x7000050deba8>
+ signature: "v24@?0q8@"NSURLCredential"16"
+ invoke   : 0x7fff30e47a04 (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFHTTPCookieStorageUnscheduleFromRunLoop)
+ copy     : 0x7fff30d3b7ed (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
+ dispose  : 0x7fff30d3b825 (/System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork`CFURLCredentialStorageCopyAllCredentials)
+```
+
+What is the `2` value in the second register (`arg2`)?  If a server and connection was trusted or not, the result was often this value:
+ ```
+typedef NS_ENUM(NSInteger, NSURLSessionAuthChallengeDisposition) {
+   NSURLSessionAuthChallengeUseCredential = 0,                                       /* Use the specified credential, which may be nil */
+   NSURLSessionAuthChallengePerformDefaultHandling = 1,                              /* Default handling for the challenge - as if this delegate were not implemented; the credential parameter is ignored. */
+   NSURLSessionAuthChallengeCancelAuthenticationChallenge = 2,                       /* The entire request will be canceled; the credential parameter is ignored. */
+   NSURLSessionAuthChallengeRejectProtectionSpace = 3,                               /* This challenge is rejected and the next authentication protection space should be tried; the credential parameter is ignored. */
+}
+```
+
+##### Breakpoint and script
+Most of the effort and skill was placing a breakpoint.
+```
+(lldb) br s -a 0x1000013ae -N fooName
+```
+You could then - now you have named the breakpoint - add instructions to the breakpoint OR you could invoke a Python script from the command line.
+
+I choose to invoke my own Python script so it was simple to re-use this code on other apps. The main lines of the script were:
+```
+frame = exe_ctx.frame
+disposition = frame.FindRegister("rsi")
+if disposition.unsigned == 2:
+     print "[!]NSURLSessionAuthChallengeDisposition set to Cancel."
+     result = frame.registers[0].GetChildMemberWithName('rsi').SetValueFromCString("0x1", error)
+     messages = {None: 'error', True: 'pass', False: 'fail'}
+     print ("[*]PATCHING result: " + messages[result])
+```
+The trick was `frame = exe_ctx.frame`.  If you didn't have this context - from https://lldb.llvm.org/use/python-reference.html - you would get stuck for hours / days.
+
+The full bypass code: https://github.com/rustymagnet3000/reverse_engineer_ios_with_debugger/blob/master/15_python_lldb_scripts/yd_pythonlldb_scripts.py
+
+##### Try, try and try again
+Like most bypass code, I tried multiple ideas.  I removed the details of failed ones for brevity.  If you care, essentially they were:
+
+ - Set `completionHandler` to NULL
+ - Overwrite the instruction with no operation ( a `NOP instruction` )
+ - Passing a `NULL Objective-C block`
+ - Passing a fake `Objective-C block`
+ - Drop the `(NSURLAuthenticationChallenge *)challenge` ( failed as a lot of code depends on this challenge)
+
+##### Source
+```
+@interface YDURLSessionDel : NSObject <NSURLSessionDelegate>
+@end
+
+@implementation YDURLSessionDel
+- (void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler{
+
+    SecTrustRef trust = [[challenge protectionSpace] serverTrust];
+    NSLog(@"🍭Challenged on: %@", [[challenge protectionSpace] host]);
+    NSLog(@"🍭Cert chain length: %ld", (long)SecTrustGetCertificateCount(trust));
+
+    completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, NULL);
+}
+@end
+
+int main(void) {
+    @autoreleasepool {
+
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+        NSURL *url = [NSURL URLWithString:@"https://www.google.com"];
+        YDURLSessionDel *del = [[YDURLSessionDel alloc] init];
+        NSURLRequest *request = [NSURLRequest requestWithURL:url];
+
+        NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+        NSLog(@"🍭 @property waitsForConnectivity default: %hhd", config.waitsForConnectivity);
+        config.waitsForConnectivity = YES;
+
+        NSURLSession *session = [NSURLSession sessionWithConfiguration:config delegate:del delegateQueue:nil];
+        NSLog(@"🍭 start");
+        NSURLSessionDataTask *task = [session dataTaskWithRequest: request
+                                                completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+
+                                    if (error) {
+                                        if(error.code == -999)
+                                            NSLog(@"🍭 Bypass failed. Connection: %@ ( %ld)", [error localizedDescription], (long)error.code);
+                                    }
+                                    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+                                        NSLog(@"🍭 HTTP Response Code: %ld", (long)[(NSHTTPURLResponse *)response statusCode]);
+                                    }
+                                    dispatch_semaphore_signal(semaphore);
+                            }];
+        [task resume];
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+        NSLog(@"🍭 finish");
+
+    }
+    return 0;
+}
+
+```
+
+### lldb bypass iOS Jailbreak detections
+##### Connect debugger
+Set your iOS debugserver to wait for the app to be opened.
+
+```
+ssh onto Jailbroken devices
+
+Install the app on JB device
+
+root# /Developer/usr/bin/debugserver localhost:6666 -v DEBUG=1 -waitfor MYAPP   // on JB device ssh session
+
+OPEN THE APP now the debugserver is waiting for a connection
+
+$) LLDB_SDK=ios lldb // from macOS machine
+
+(lldb) process connect connect://localhost:6666
+```
+##### Find the target
+```
+(lldb) lookup jail
+****************************************************
+2 hits in: MYAPP
+****************************************************
+-[RSADeviceInfo jailBreak]
+-[RSADeviceInfo setJailBreak:]
+```
+##### Attack the Setter
+```
+(lldb) b -[RSADeviceInfo setJailBreak:]
+Breakpoint 2: where = MYAPP`-[RSADeviceInfo setJailBreak:], address = 0x00000001033fe1fc
+
+(lldb) c
+Process 1874 resuming
+Process 1874 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1 2.1
+    frame #0: 0x00000001033fe1fc MYAPP` -[RSADeviceInfo setJailBreak:]
+
+
+(lldb) p (char *) $arg2
+(char *) $2 = 0x00000001034bb104 "setJailBreak:"
+
+(lldb) p (char *) $arg3
+(char *) $4 = 0x0000000000000005 <no value available>
+
+(lldb) p (int) $arg3
+(int) $5 = 5. // this is the value
+
+register write $arg3 0 // put the value 0 (clean?) in the setter
+```
+##### Attack the getter
+Kill the app and start the whole process of connecting again.
+```
+(lldb) b -[RSADeviceInfo jailBreak]
+Breakpoint 1: where = MYAPP`-[RSADeviceInfo jailBreak], address = 0x0000000100b821ec
+
+Process 1957 stopped
+
+(lldb) step until the return register is set $x0 on a physical iOS device
+
+    frame #0: 0x0000000100b821f8 MYAPP` -[RSADeviceInfo jailBreak]  + 12
+MYAPP`-[RSADeviceInfo jailBreak]:
+->  0x100b821f8 <+12>: ret
+
+(lldb) po (int) $x0
+5
+
+(lldb) register write $x0 0
+
+(lldb) p (int) $x0
+0
+🐝🐝 Success 🐝🐝.  
+```
+##### Summary
+The `getter` example is a little more work; you have to place the `breakpoint`, `step` until it sets the `return register` and then modify the return value.  All of that can be automated.  Changing the `Setter` is normally a one-time only call.
+
+### lldb inspect third party SDK
+##### Get helper lldb scripts
+https://github.com/DerekSelander/LLDB
+##### Dump classes
+`dclass -o my_app`
+#### search classes on Heap
+```
+(lldb) search RSADeviceInfo
+<RSADeviceInfo: 0x1d019e780>
+```
+#### Inspect interesting Methods
+```
+(lldb) methods 0x1d019e780
+<RSADeviceInfo: 0x1d019e780>:
+in RSADeviceInfo:
+	Properties:
+		@property (retain) NSString* Timestamp;  (@synthesize Timestamp = Timestamp;)
+		@property (retain) NSString* HardwareID;  (@synthesize HardwareID = HardwareID;)
+		@property (retain) NSString* SIM_ID;  (@synthesize SIM_ID = SIM_ID;)
+		@property (retain) NSString* PhoneNumber;  (@synthesize PhoneNumber = PhoneNumber;)
+		@property (retain) RSAGeoLocationInfo* GeoLocation;  (@synthesize GeoLocation = GeoLocation;)
+		@property (retain) NSString* DeviceModel;  (@synthesize DeviceModel = DeviceModel;)
+```
+#### Invoke instance methods
+```
+(lldb) po [0x1d019e780 DeviceName]
+Security iPhone 8
+
+(lldb) po [0x1d019e780 DeviceModel]
+iPhone
+
+(lldb) po [0x1d019e780 jailBreak]
+0x0000000000000005  // very jailbroken
+```
+#### Create a class
+```
+(lldb) settings set target.language objc
+
+(lldb) exp RSADeviceInfo *$rsa = (id)[[RSADeviceInfo alloc] init]
+
+(lldb) po $rsa
+<RSADeviceInfo: 0x1c819ddc0>
+```
+
+### lldb lifting code ( iOS app )
+This article was written to show:
+- [x] a framework can be ripped out of an iOS app
+- [x] you can invoke Objective-C code without even importing the Modules
+
+##### Find the target app
+I found an app that was using a phone number validator.  This was publicly available from:
+https://github.com/iziz/libPhoneNumber-iOS
+
+##### Extract the App
+I downloaded the app via the AppStore and then extracted it from a jailbroken device.
+
+##### Extract the Framwork
+Inside the app bundle, copy the entire `libPhoneNumber-iOS` framework.  Ignore the fact the Framwork is codesigned.  xCode will resign the Framework later, when you create a fresh app.
+##### Xcode
+Create a new hello world project and drag in your lifted Framework.
+
+The "lifted" code inside an iOS app was thinned.  Don't try and run this on a simulator.  Run the app in debug mode and connect `lldb`.
+
+##### Dump the classes
+```
+[+] script to dump classes from: https://github.com/DerekSelander/LLDB
+
+dclass -m libPhoneNumber_iOS
+
+Dumping classes
+************************************************************
+NBPhoneNumberUtil
+NBPhoneNumberDesc
+
+```
+##### attach lldb
+```
+(lldb) exp id $a = [NBPhoneNumberUtil new]
+(lldb) po $a
+<NBPhoneNumberUtil: 0x1c1c6b580>
+
+(lldb) expression -lobjc -O -- [$a _shortMethodDescription]
+// dumps all available Class, Properties and Instance Methods
+
+(lldb) exp NSString *$b = @"497666777000"
+(lldb) exp NSString *$nn = nil
+(lldb) exp NSNumber *$cc = (NSNumber *)[$a extractCountryCode:$b nationalNumber:&$nn]
+// using the github page, find how to invoke a method via Objective C, then apply it via lldb
+
+(lldb) p $cc
+(__NSCFNumber *) $cc = 0xb0000000000002c3 (long)49
+(lldb) p $nn
+(__NSCFString *) $nn = 0x00000001c4227be0 @"7666777000"
 ```
