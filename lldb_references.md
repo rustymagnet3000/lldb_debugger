@@ -51,3 +51,5 @@ http://www.secretmango.com/jimb/Whitepapers/ptrace/ptrace.html
 https://gist.github.com/joswr1ght/fb8c9f4f3f9a2feebf7f https://www.theiphonewiki.com/wiki/Bugging\_Debuggers
 #### lldb and Blocks
 https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/WorkingwithBlocks/WorkingwithBlocks.html
+#### Different ARM and x86 Registers
+https://azeria-labs.com/arm-data-types-and-registers-part-2/
