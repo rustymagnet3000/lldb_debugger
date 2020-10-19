@@ -30,9 +30,17 @@
 
 <!-- /TOC -->
 
-### Getting started
+### Finding variables
 ##### Frame
 `frame info`
+##### Print variables in the Frame
+`frame variable -A -T`
+##### Show the current thread's call stack
+`bt`
+##### Move to another Frame to find variables
+`frame select 1`
+
+### Getting started
 ##### Thread
 `thread list`
 ##### Brief list of attached Libraries
@@ -174,6 +182,8 @@ Enter your Python command(s). Type 'DONE' to end.
 `memory read 0x00007fff36d99fb5`
 ##### Read five instructions after address
 `memory read --format instruction --count 5 0x10463d970`
+##### Read memory and print in format Decimal
+`mem read 0x00007ffee5f99610 -f d`
 ##### Get start and end of search
 ```
 (lldb) section
@@ -724,7 +734,7 @@ Make sure you add the `$` sign before a variable. Else you will hit:
 ##### Check versions ( python, lldb )
 `script import sys; print(sys.version)`
 ##### Launch
-`lldb attach -p ps x|grep -i -m1 sample|awk '{print $1}'` // 'sample' is app name
+`lldb attach -p $(ps x | grep -i -m1 debugger_challenge | awk '{print $1}')` // 'debugger_challenge' is app name
 ##### Import lldb script
 `command source <file_path>/lldb_script.txt`
 ##### Import Python script
@@ -734,8 +744,7 @@ Make sure you add the `$` sign before a variable. Else you will hit:
 ```
 - Kill xcode
 - Run iOS app in the simulator
-- run a `ps -ax` to find your PID
-- `$ lldb -p <PID>`
+- lldb attach -p $(ps x | grep -i -m1 debugger_challenge | awk '{print $1}')
 ```
 ##### Watch Packets ( caution )
 `log enable gdb-remote packets`

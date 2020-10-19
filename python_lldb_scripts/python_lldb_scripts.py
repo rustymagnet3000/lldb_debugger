@@ -25,15 +25,35 @@ def __lldb_init_module(debugger, internal_dict):
 def __bypass_sysctl_symbol(debugger, command, exe_ctx, result, internal_dict):
     """
         A script to stop anti-debug sysctl code.
-        The code sets a breakpoint on ptrace inside of libsystem_kernel.dylib.
+        The code sets a breakpoint inside of libsystem_c.dylib.
         Then it calls out to another Python function.
     """
     frame = exe_ctx.frame
     if frame is None:
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
-    debugger.HandleCommand('b -F sysctl -s libsystem_kernel.dylib -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -F python_lldb_scripts.__prepare_patch fooName')
+    debugger.HandleCommand('b -F sysctl -s libsystem_c.dylib -N fooName --auto-continue true')
+    debugger.HandleCommand('breakpoint command add -F python_lldb_scripts.__sysctl_patch fooName')
+
+def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
+    """
+        A custom patch function for sysctl()
+        Ideally it wouldn't be a custom function but this API passes in a four part int array pointer
+        Whereas other APIs just pass a single Int value ( and not a int * )
+    """
+    hits = sbbreakpointlocation.GetHitCount()
+    function_name = sbframe.GetFunctionName()
+    print("[*] Hits={0}:{1}".format(str(hits), function_name))
+    thread = sbframe.GetThread()
+    process = thread.GetProcess()
+    target_register = __set_target_register(function_name)
+    instruction = sbframe.FindRegister(target_register)
+    options = lldb.SBExpressionOptions()
+    process_info = process.GetProcessInfo()
+    if process_info.IsValid():
+        print("[*]Process ID       \t{0}".format(process.GetProcessID()))
+        ppid = sbframe.EvaluateExpression('(int *)getppid();', options)
+        print("[*]Parent process ID\t{0}".format(ppid.unsigned))
 
 
 def __dl_symbol_snooper(debugger, command, exe_ctx, result, internal_dict):
