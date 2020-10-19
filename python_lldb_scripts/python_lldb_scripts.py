@@ -35,6 +35,7 @@ def __bypass_sysctl_symbol(debugger, command, exe_ctx, result, internal_dict):
     debugger.HandleCommand('b -F sysctl -s libsystem_c.dylib -N fooName --auto-continue true')
     debugger.HandleCommand('breakpoint command add -F python_lldb_scripts.__sysctl_patch fooName')
 
+
 def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
     """
         A custom patch function for sysctl()
@@ -43,31 +44,34 @@ def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
     """
     hits = sbbreakpointlocation.GetHitCount()
     function_name = sbframe.GetFunctionName()
-    print("[*] Hits={0}:{1}".format(str(hits), function_name))
+    print("[*]Hits={0}:{1}".format(str(hits), function_name))
     thread = sbframe.GetThread()
     process = thread.GetProcess()
     process_info = process.GetProcessInfo()
-    options = lldb.SBExpressionOptions()
-    target_register = __set_target_register(function_name)
-    ptr_to_mib = sbframe.FindRegister(target_register)
-    int_type = ptr_to_mib.GetType().GetPointeeType()
-    # the ptr_to_mib gives address of first mib[0].  I need mib[3]
-    # that is po (int *) mib + 12
-    print("[*] target_register={0}\tpointer to mib[3]:{1}".format(target_register, ptr_to_mib))
-    error = lldb.SBError()
-    c_string = process.ReadUnsignedFromMemory(int(ptr_to_mib.GetValue(), 16), 4, error)
-    if not error.Success():
-        print(error)
-        return None
-    else:
-        offset = ptr_to_mib.GetValueAsUnsigned() + 3 * int_type.GetByteSize()
-        val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), int_type)
-        print("[*] Offset: {0}\t\t type{1}".format(val, type(val)))
     if process_info.IsValid():
-        print("[*]Process ID       \t{0}".format(process.GetProcessID()))
-        ppid = sbframe.EvaluateExpression('(int *)getppid();', options)
-        print("[*]Parent process ID\t{0}".format(ppid.unsigned))
+        options = lldb.SBExpressionOptions()
+        target_register = __set_target_register(function_name)
+        raw_ptr_mib = sbframe.FindRegister(target_register)
 
+        error = lldb.SBError()
+        ptr_to_mib = process.ReadPointerFromMemory(int(raw_ptr_mib.GetValue(), 16), error)
+
+        if not error.Success():
+            print(error)
+            return None
+        else:
+            # the ptr_to_mib gives address of first mib[0].  I need mib[3].  That is lldb) po (int *) mib + 12
+            pid_inside_mib_address = ptr_to_mib + 12
+            print("[*]mib[0]:{1}\tmib[3]:{2}".format(target_register, ptr_to_mib, pid_inside_mib_address))
+            pid_from_mib = process.ReadUnsignedFromMemory(int(raw_ptr_mib.GetValue(), 16), 4, error)
+            print("[*]Process ID       \tfrom lldb api:{0}\tfrom memory:{0}".format(process.GetProcessID(), pid_from_mib))
+            ppid = sbframe.EvaluateExpression('(int *)getppid();', options)
+            print("[*]Parent process ID\t{0}".format(ppid.unsigned))
+
+        # error = lldb.SBError()
+        # result = frame.registers[0].GetChildMemberWithName(register).SetValueFromCString(patch, error)
+        # messages = {None: 'error', True: 'PATCHED', False: 'fail'}
+        # print ("[*] Result: " + messages[result])
 
 def __dl_symbol_snooper(debugger, command, exe_ctx, result, internal_dict):
     """
