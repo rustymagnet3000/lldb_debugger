@@ -46,10 +46,23 @@ def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
     print("[*] Hits={0}:{1}".format(str(hits), function_name))
     thread = sbframe.GetThread()
     process = thread.GetProcess()
-    target_register = __set_target_register(function_name)
-    instruction = sbframe.FindRegister(target_register)
-    options = lldb.SBExpressionOptions()
     process_info = process.GetProcessInfo()
+    options = lldb.SBExpressionOptions()
+    target_register = __set_target_register(function_name)
+    ptr_to_mib = sbframe.FindRegister(target_register)
+    int_type = ptr_to_mib.GetType().GetPointeeType()
+    # the ptr_to_mib gives address of first mib[0].  I need mib[3]
+    # that is po (int *) mib + 12
+    print("[*] target_register={0}\tpointer to mib[3]:{1}".format(target_register, ptr_to_mib))
+    error = lldb.SBError()
+    c_string = process.ReadUnsignedFromMemory(int(ptr_to_mib.GetValue(), 16), 4, error)
+    if not error.Success():
+        print(error)
+        return None
+    else:
+        offset = ptr_to_mib.GetValueAsUnsigned() + 3 * int_type.GetByteSize()
+        val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), int_type)
+        print("[*] Offset: {0}\t\t type{1}".format(val, type(val)))
     if process_info.IsValid():
         print("[*]Process ID       \t{0}".format(process.GetProcessID()))
         ppid = sbframe.EvaluateExpression('(int *)getppid();', options)
@@ -140,6 +153,8 @@ def __set_target_register(fnc_name):
         return 'arg2'
     elif 'syscall' in fnc_name:
         return 'arg2'
+    elif 'sysctl' in fnc_name:
+        return 'arg1'
     else:
         return 'arg1'
 
@@ -178,6 +193,7 @@ def __bypass_exception_port_check(debugger, command, exe_ctx, result, internal_d
     debugger.HandleCommand('breakpoint command add -F python_lldb_scripts.YDDebuggerPatching fooName')
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
+
 
 def __bypass_urlsession_trust(debugger, command, exe_ctx, result, internal_dict):
     """
@@ -221,6 +237,7 @@ def __print_four_registers(debugger, command, exe_ctx, result, internal_dict):
             print("[*]{0}\t:{1}\t\t:{2}".format(i, reg.value, reg.GetValueAsUnsigned()))
         else:
             print(i, reg.description)
+
 
 def __print_registers(debugger, command, exe_ctx, result, internal_dict):
     """
