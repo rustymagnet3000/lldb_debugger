@@ -26,7 +26,7 @@ def __bypass_sysctl_symbol(debugger, command, exe_ctx, result, internal_dict):
     """
         A script to stop anti-debug sysctl code.
         The code sets a breakpoint inside of libsystem_c.dylib.
-        Then it calls out to another Python function.
+        When the breakpoint fires, it calls to another function.
     """
     frame = exe_ctx.frame
     if frame is None:
@@ -52,7 +52,6 @@ def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
         options = lldb.SBExpressionOptions()
         target_register = __set_target_register(function_name)
         raw_ptr_mib = sbframe.FindRegister(target_register)
-
         error = lldb.SBError()
         ptr_to_mib = process.ReadPointerFromMemory(int(raw_ptr_mib.GetValue(), 16), error)
 
@@ -61,17 +60,22 @@ def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
             return None
         else:
             # the ptr_to_mib gives address of first mib[0].  I need mib[3].  That is lldb) po (int *) mib + 12
-            pid_inside_mib_address = ptr_to_mib + 12
-            print("[*]mib[0]:{1}\tmib[3]:{2}".format(target_register, ptr_to_mib, pid_inside_mib_address))
-            pid_from_mib = process.ReadUnsignedFromMemory(int(raw_ptr_mib.GetValue(), 16), 4, error)
-            print("[*]Process ID       \tfrom lldb api:{0}\tfrom memory:{0}".format(process.GetProcessID(), pid_from_mib))
-            ppid = sbframe.EvaluateExpression('(int *)getppid();', options)
-            print("[*]Parent process ID\t{0}".format(ppid.unsigned))
+            ptr_pid_from_mib = ptr_to_mib + 12
+            print("[*]Address of mib[0]:{1}\tmib[3]:{2}".format(target_register, ptr_to_mib, ptr_pid_from_mib))
+            pid_from_mib = process.ReadPointerFromMemory(ptr_pid_from_mib, error)
+            pid = process.ReadUnsignedFromMemory(int(raw_ptr_mib.GetValue(), 16), 4, error)
 
-        # error = lldb.SBError()
-        # result = frame.registers[0].GetChildMemberWithName(register).SetValueFromCString(patch, error)
-        # messages = {None: 'error', True: 'PATCHED', False: 'fail'}
-        # print ("[*] Result: " + messages[result])
+            val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(ptr_pid_from_mib, lldb.target), 4)
+            print(val)
+            print(pid, process.GetProcessID())
+            if pid_from_mib == process.GetProcessID():
+                print("[*]Read PID from MIB array:{0}".format(pid_from_mib))
+                ppid = sbframe.EvaluateExpression('(int *)getppid();', options)
+                print("[*]Parent process ID\t{0}\t{1}".format(ppid.unsigned, type(ppid.GetValueAsUnsigned())))
+                result = process.WriteMemory(ptr_pid_from_mib, ppid.GetValueAsUnsigned(), error)
+                messages = {None: 'error', True: 'PATCHED', False: 'fail'}
+                print ("[*]Result: " + messages[result])
+
 
 def __dl_symbol_snooper(debugger, command, exe_ctx, result, internal_dict):
     """
