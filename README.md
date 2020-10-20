@@ -35,6 +35,8 @@
 `frame info`
 ##### Print variables in the Frame
 `frame variable -A -T`
+##### Get pointer to variables inside the Frame
+`fr v -L`
 ##### Show the current thread's call stack
 `bt`
 ##### Move to another Frame to find variables
@@ -729,6 +731,67 @@ Make sure you add the `$` sign before a variable. Else you will hit:
 
 `error: warning: got name from symbols: b`
 
+
+### Structs
+C code:
+```
+struct Foo {
+    int a;
+    int b;
+};
+
+void bar_void ( void *input )
+{
+    printf("Pointer: %p.\n", input);		// BREAKPOINT HERE
+}
+
+int main ( void ) {
+    struct Foo my_foo = { 111, 222 };
+    bar_void ( &my_foo );
+    return 0;
+}
+```
+LLDB commands:
+```
+
+(lldb) fr v -L
+0x00007ffeefbff528: (void *) input = 0x00007ffeefbff550
+
+(lldb) script
+
+>>> ptr_type = lldb.target.FindFirstType('Foo')
+
+>>> print(b)
+struct Foo {
+    int a;
+    int b;
+}
+>>> print(type(b))
+<class 'lldb.SBType'>
+
+
+>>> ptr_type = lldb.target.FindFirstType('Foo').GetPointerType()
+
+>>> print(ptr_type)
+struct Foo *
+
+>>> print(type(ptr_type))
+<class 'lldb.SBType'>
+
+>>> root = lldb.target.CreateValueFromAddress("root", lldb.SBAddress(0x00007ffeefbff538, lldb.target), ptr_type)
+
+>> print(root)
+(Foo *) root = 0x00007ffeefbff550
+
+>>> root.GetValue()
+'0x00007ffeefbff550'
+
+>>> root.GetChildAtIndex(0).GetValue()
+'111'
+
+>>> root.GetChildAtIndex(1).GetValue()
+'222'
+```
 
 ### Advanced
 ##### Check versions ( python, lldb )
