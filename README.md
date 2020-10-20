@@ -737,25 +737,24 @@ Make sure you add the `$` sign before a variable. Else you will hit:
 ### Read Pointer Array
 ##### Source code
 ```
-#import "sys/sysctl.h"
-
-void foo_void ( int *input )
+void foo_void ( float *input )
 {
     printf("Pointer: %p.\n", input);
 }
 
 int main ( void ) {
 
-    int mib[4];
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = getpid();
+    float tiny_array[4];
+    tiny_array[0] = 1.0;
+    tiny_array[1] = 2.0;
+    tiny_array[2] = 3.0;
+    tiny_array[3] = 4.0;
 
 
-    foo_void ( mib );
+    foo_void ( tiny_array );
     return 0;
 }
+
 ```
 ##### Solution
 ```
