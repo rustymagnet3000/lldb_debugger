@@ -1,6 +1,7 @@
 # The LLDB Debugger
 <!-- TOC depthFrom:3 depthTo:3 withLinks:1 updateOnSave:1 orderedList:0 -->
 
+- [Finding variables](#finding-variables)
 - [Getting started](#getting-started)
 - [Disassemble](#disassemble)
 - [Registers](#registers)
@@ -16,6 +17,8 @@
 - [lldb with Objective C](#lldb-with-objective-c)
 - [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
 - [lldb with C code](#lldb-with-c-code)
+- [Read Pointer Array](#read-pointer-array)
+- [Structs](#structs)
 - [Advanced](#advanced)
 - [stdout](#stdout)
 - [Playing with the User Interface](#playing-with-the-user-interface)
@@ -718,7 +721,7 @@ error: typedef 'VERSION_INFO' cannot be referenced with a struct specifier
 (PAS_RESULT) $0 = 2
 ```
 ##### Cast return types
-The flexibility of `void *` is a great tool.  If you don't know how to cast the return handle, you can just point it to the garbage.
+The flexibility of `void *` is great.  If you don't know how to cast the return handle you can point it to `void`.
 ```
 (lldb) exp (void*) getCurrentVersion(&$b);
 (void *) $2 = 0x0000000000000000
@@ -731,10 +734,69 @@ Make sure you add the `$` sign before a variable. Else you will hit:
 
 `error: warning: got name from symbols: b`
 
+### Read Pointer Array
+##### Source code
+```
+#import "sys/sysctl.h"
+
+void foo_void ( int *input )
+{
+    printf("Pointer: %p.\n", input);
+}
+
+int main ( void ) {
+
+    int mib[4];
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = getpid();
+
+
+    foo_void ( mib );
+    return 0;
+}
+```
+##### Solution
+```
+(lldb) fr v -L
+0x00007ffeefbff4c8: (float *) input = 0x00007ffeefbff4f0
+
+(lldb) script
+Python Interactive Interpreter. To exit, type 'quit()', 'exit()'.
+
+>>> ptr = lldb.frame.FindVariable('input')
+
+>>> print(ptr.GetValue())
+0x00007ffeefbff4f0
+
+>>> ptr_type = ptr.GetType().GetPointeeType()
+
+>>> print(ptr_type)
+float
+
+>>> ptr_size_type = ptr_type.GetByteSize()
+
+>>> print(ptr_size_type)
+4
+
+
+>>> for i in range (0, 4):
+...     offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
+...     val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
+...     print(offset, val.GetValue())
+...
+(140732920755440, '1')
+(140732920755444, '2')
+(140732920755448, '3')
+(140732920755452, '4')
+```
 
 ### Structs
 C code:
 ```
+// https://stackoverflow.com/questions/38251944/lldb-python-api-sbaddress-constructor-error
+
 struct Foo {
     int a;
     int b;
@@ -758,17 +820,6 @@ LLDB commands:
 0x00007ffeefbff528: (void *) input = 0x00007ffeefbff550
 
 (lldb) script
-
->>> ptr_type = lldb.target.FindFirstType('Foo')
-
->>> print(b)
-struct Foo {
-    int a;
-    int b;
-}
->>> print(type(b))
-<class 'lldb.SBType'>
-
 
 >>> ptr_type = lldb.target.FindFirstType('Foo').GetPointerType()
 
