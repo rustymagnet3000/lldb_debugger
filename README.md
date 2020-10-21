@@ -18,6 +18,7 @@
 - [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
 - [lldb with C code](#lldb-with-c-code)
 - [Read Pointer Array](#read-pointer-array)
+- [Move frame in the call stack to find a variable by name](#move-frame-in-the-call-stack-to-find-a-variable-by-name)
 - [Structs](#structs)
 - [Advanced](#advanced)
 - [stdout](#stdout)
@@ -739,22 +740,18 @@ Make sure you add the `$` sign before a variable. Else you will hit:
 ```
 void foo_void ( float *input )
 {
-    printf("Pointer: %p.\n", input);
+    printf("Pointer: %p.\n", input);        <-- breakpoint here
 }
 
 int main ( void ) {
-
     float tiny_array[4];
     tiny_array[0] = 1.0;
     tiny_array[1] = 2.0;
     tiny_array[2] = 3.0;
     tiny_array[3] = 4.0;
-
-
     foo_void ( tiny_array );
     return 0;
 }
-
 ```
 ##### Solution
 ```
@@ -789,6 +786,73 @@ float
 (140732920755444, '2')
 (140732920755448, '3')
 (140732920755452, '4')
+```
+
+
+### Move frame in the call stack to find a variable by name
+##### Source code
+```
+void foo_void ( float *input )
+{
+    printf("Pointer: %p.\n", input);      <-- Breakpoint here
+}
+
+int main ( void ) {
+    float tiny_array[4];
+    tiny_array[0] = 1.0;
+    tiny_array[1] = 2.0;
+    tiny_array[2] = 3.0;
+    tiny_array[3] = 4.0;
+    foo_void ( tiny_array );
+    return 0;
+}
+```
+##### Solution
+```
+>>> print(lldb.frame.GetFunctionName())
+foo_void
+
+>>> f = lldb.thread.GetFrameAtIndex(1)
+
+>>> ptr = f.FindVariable('tiny_array')
+
+>>> print(ptr)
+(float [4]) tiny_array = (1, 2, 3, 4)
+
+>>> print(ptr.GetValue())
+None
+
+>>> print(ptr.AddressOf())
+(float (*)[4]) &tiny_array = 0x00007ffeefbff540
+
+>>> print(ptr.AddressOf().GetType())
+float (*)[4]
+
+>>> print(ptr.TypeIsPointerType())
+False
+
+>>> print(ptr.GetNumChildren())
+4
+
+>>> print(ptr.GetLoadAddress())
+140732920755520
+
+>>> pointee_type = ptr.AddressOf().GetType().GetPointeeType()
+
+>>> print(pointee_type)
+float [4]
+
+>>> print(pointee_type)
+
+
+>>> for i in range (0, 4):
+... 	offset = ptr.GetLoadAddress() + i * 4
+... 	print(offset)
+...
+140732920755520
+140732920755524
+140732920755528
+140732920755532
 ```
 
 ### Structs
