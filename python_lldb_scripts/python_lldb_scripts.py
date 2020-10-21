@@ -44,13 +44,16 @@ def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
         Then the kernal will check if the parent PID is being debugged instead of the current PID
     """
     MIB_VALUE_TO_OVERWRITE = 3
+    MIB_VAR_NAME = 'mib'
     hits = sbbreakpointlocation.GetHitCount()
     function_name = sbframe.GetFunctionName()
-    print("[*]Hits={0}\t{1}".format(str(hits), function_name))
-    print("[*]Parent:\t{0}".format(sbframe.get_parent_frame().GetFunctionName()))
+    print("[*]__sysctl_patch: Hits={0}\tfunc_name:{1}\tparent:{2}".format(str(hits), function_name, sbframe.get_parent_frame().GetFunctionName()))
     thread = sbframe.GetThread()
     f = thread.GetFrameAtIndex(1)
-    ptr = f.FindVariable('mib')
+    ptr = f.FindVariable(MIB_VAR_NAME)
+    if not ptr:
+        print("[*]Could not find:{0}".format(MIB_VAR_NAME))
+        return
     pid_from_mib = ptr.GetChildAtIndex(MIB_VALUE_TO_OVERWRITE)
     process = thread.GetProcess()
     if pid_from_mib.GetValueAsUnsigned() == process.GetProcessID():
@@ -156,21 +159,21 @@ def __set_target_register(fnc_name):
     else:
         return 'arg1'
 
+
 def __prepare_patch(sbframe, sbbreakpointlocation, dict):
     """
         Function to patch register values.
         First looks up the calling Function Name.
         Then calls out to setTargetRegister() to find out what register to patch.
     """
-
     hits = sbbreakpointlocation.GetHitCount()
     function_name = sbframe.GetFunctionName()
+    print("[*]__prepare_patch: Hits={0}\tfunc_name:{1}\tparent:{2}".format(str(hits), function_name, sbframe.get_parent_frame().GetFunctionName()))
     thread = sbframe.GetThread()
     thread_id = thread.GetThreadID()
     target_register = __set_target_register(function_name)
     instruction = sbframe.FindRegister(target_register)
-    print("[*] target_register={0}\toriginal instruction:{1}".format(target_register, instruction))
-    print("[*] Hits={0}:{1} (\t\tthread_id:{2}\tinstruction:{3}\tnum_frames:{4})".format(str(hits), function_name, str(thread_id), str(instruction.unsigned), thread.num_frames))
+    print("[*] target_register={0}\toriginal instruction:{1}".format(target_register, instruction.unsigned))
     if instruction.unsigned > 0:
         __final_patch(sbframe, target_register, '0x0')
 
@@ -180,15 +183,13 @@ def __bypass_exception_port_check(debugger, command, exe_ctx, result, internal_d
         A script to stop anti-debug code that works by detecting exception ports.
         The code sets a breakpoint on task_get_exception_ports.
         Then it calls out to another Python function.
-        This other function overwrites a function parameter passed into task_get_exception_ports.
-        Print to logs, if it fires.
     """
     frame = exe_ctx.frame
     if frame is None:
         result.SetError('[!]You must have the process suspended in order to execute this command')
         return
     debugger.HandleCommand('b -n task_get_exception_ports -N fooName --auto-continue true')
-    debugger.HandleCommand('breakpoint command add -F python_lldb_scripts.YDDebuggerPatching fooName')
+    debugger.HandleCommand('breakpoint command add -F python_lldb_scripts.__prepare_patch fooName')
     message = ("[*]Breakpoint set. Continue...")
     result.AppendMessage(message)
 
