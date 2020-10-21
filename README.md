@@ -18,7 +18,7 @@
 - [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
 - [lldb with C code](#lldb-with-c-code)
 - [Read Pointer Array](#read-pointer-array)
-- [Move frame in the call stack to find a variable by name](#move-frame-in-the-call-stack-to-find-a-variable-by-name)
+- [Find a Frame Variable from Parent Frame](#find-a-frame-variable-from-parent-frame)
 - [Structs](#structs)
 - [Advanced](#advanced)
 - [stdout](#stdout)
@@ -789,7 +789,7 @@ float
 ```
 
 
-### Move frame in the call stack to find a variable by name
+### Find a Frame Variable from Parent Frame
 ##### Source code
 ```
 void foo_void ( float *input )
@@ -819,8 +819,8 @@ foo_void
 >>> print(ptr)
 (float [4]) tiny_array = (1, 2, 3, 4)
 
->>> print(ptr.GetValue())
-None
+p>>> rint(ptr.GetChildAtIndex(1))
+(float) [1] = 2
 
 >>> print(ptr.AddressOf())
 (float (*)[4]) &tiny_array = 0x00007ffeefbff540
@@ -837,22 +837,28 @@ False
 >>> print(ptr.GetLoadAddress())
 140732920755520
 
->>> pointee_type = ptr.AddressOf().GetType().GetPointeeType()
+>>> ptr_type = ptr.AddressOf().GetType()
+
+>>> print(ptr_type)
+float (*)[4]
+
+>>> pointee_type = ptr_type.GetPointeeType()
 
 >>> print(pointee_type)
 float [4]
 
->>> print(pointee_type)
+>>> print(pointee_type.GetByteSize())
+16
 
-
->>> for i in range (0, 4):
-... 	offset = ptr.GetLoadAddress() + i * 4
-... 	print(offset)
+>>> for i in range (0, ptr.GetNumChildren()):
+... 	offset = ptr.GetLoadAddress() + i * (pointee_type.GetByteSize() / ptr.GetNumChildren())
+... 	print(offset, str(ptr.GetChildAtIndex(i)))
 ...
-140732920755520
-140732920755524
-140732920755528
-140732920755532
+(140732920755520, '(float) [0] = 1')
+(140732920755524, '(float) [1] = 2')
+(140732920755528, '(float) [2] = 3')
+(140732920755532, '(float) [3] = 4')
+
 ```
 
 ### Structs
