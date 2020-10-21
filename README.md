@@ -18,7 +18,7 @@
 - [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
 - [lldb with C code](#lldb-with-c-code)
 - [Read Pointer Array](#read-pointer-array)
-- [Find a Frame Variable from Parent Frame](#find-a-frame-variable-from-parent-frame)
+- [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
 - [Structs](#structs)
 - [Advanced](#advanced)
 - [stdout](#stdout)
@@ -789,7 +789,7 @@ float
 ```
 
 
-### Find a Frame Variable from Parent Frame
+### Find, read and amend variable inside Parent Frame
 ##### Source code
 ```
 void foo_void ( float *input )
@@ -811,6 +811,9 @@ int main ( void ) {
 ```
 >>> print(lldb.frame.GetFunctionName())
 foo_void
+
+>>> print(lldb.frame.get_parent_frame().GetFunctionName())
+main
 
 >>> f = lldb.thread.GetFrameAtIndex(1)
 
@@ -858,6 +861,13 @@ float [4]
 (140732920755524, '(float) [1] = 2')
 (140732920755528, '(float) [2] = 3')
 (140732920755532, '(float) [3] = 4')
+
+
+>>> error = lldb.SBError()
+>>> result = ptr.GetChildAtIndex(i).SetValueFromCString('0xFF', error)
+
+>>> print(ptr.GetChildAtIndex(3))
+(float) [3] = 255
 
 ```
 

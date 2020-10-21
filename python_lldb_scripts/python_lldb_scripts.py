@@ -39,33 +39,30 @@ def __bypass_sysctl_symbol(debugger, command, exe_ctx, result, internal_dict):
 def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
     """
         A custom patch function for sysctl()
-        Ideally it wouldn't be a custom function but this API passes in a four part int array pointer
-        Whereas other APIs just pass a single Int value ( and not a int * )
+        After stopping on sysctl, it searches the frame of the parent for 'mib'
+        Then it sets the mib3[] value from the getpid() to getppid()
+        Then the kernal will check if the parent PID is being debugged instead of the current PID
     """
+    MIB_VALUE_TO_OVERWRITE = 3
     hits = sbbreakpointlocation.GetHitCount()
     function_name = sbframe.GetFunctionName()
-    print("[*]Hits={0}:{1}".format(str(hits), function_name))
+    print("[*]Hits={0}\t{1}".format(str(hits), function_name))
+    print("[*]Parent:\t{0}".format(sbframe.get_parent_frame().GetFunctionName()))
     thread = sbframe.GetThread()
+    f = thread.GetFrameAtIndex(1)
+    ptr = f.FindVariable('mib')
+    pid_from_mib = ptr.GetChildAtIndex(MIB_VALUE_TO_OVERWRITE)
     process = thread.GetProcess()
-    process_info = process.GetProcessInfo()
-    if process_info.IsValid():
+    if pid_from_mib.GetValueAsUnsigned() == process.GetProcessID():
         options = lldb.SBExpressionOptions()
-        target_register = __set_target_register(function_name)
-        raw_ptr_mib = sbframe.FindRegister(target_register)
-        # the ptr_to_mib gives address of first mib[0].  I need mib[3].  That is lldb) po (int *) mib + 12
-        # ptr_pid_from_mib = ptr_to_mib + 12
-        offset = raw_ptr_mib.GetValueAsUnsigned() + 12
-        offset_type = raw_ptr_mib.GetType()
-        print("[*]Register:{0}\n[*]Address of mib[0]:{1}".format(target_register, raw_ptr_mib.GetValue()))
-        print("[*]mib[0]:{0}\n[*]mib[3]:{1}\t(offset)".format(raw_ptr_mib.GetValueAsUnsigned(), offset))
-        print(raw_ptr_mib.GetType().GetPointeeType())
-        val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), offset_type)
-        print(raw_ptr_mib.GetType(), val.GetValue(), type(val))
-        if 1 == process.GetProcessID():
-            print("[*]Read PID from MIB array:{0}".format(pid_from_mib))
-            ppid = sbframe.EvaluateExpression('(int *)getppid();', options)
-            print("[*]Parent process ID\t{0}\t{1}".format(ppid.unsigned, type(ppid.GetValueAsUnsigned())))
-            result = process.WriteMemory(ptr_pid_from_mib, ppid.GetValueAsUnsigned(), error)
+        options.SetLanguage(lldb.eLanguageTypeC)
+        parent_pid = sbframe.EvaluateExpression('(int *)getppid();', options)
+        error = lldb.SBError()
+        result = ptr.GetChildAtIndex(MIB_VALUE_TO_OVERWRITE).SetValueFromCString(hex(parent_pid.unsigned), error)
+        if not error.Success():
+            print(error)
+            return None
+        else:
             messages = {None: 'error', True: 'PATCHED', False: 'fail'}
             print ("[*]Result: " + messages[result])
 
