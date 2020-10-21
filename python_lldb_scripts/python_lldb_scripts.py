@@ -53,13 +53,14 @@ def __sysctl_patch(sbframe, sbbreakpointlocation, dict):
         target_register = __set_target_register(function_name)
         raw_ptr_mib = sbframe.FindRegister(target_register)
         # the ptr_to_mib gives address of first mib[0].  I need mib[3].  That is lldb) po (int *) mib + 12
-        #  ptr_pid_from_mib = ptr_to_mib + 12
+        # ptr_pid_from_mib = ptr_to_mib + 12
         offset = raw_ptr_mib.GetValueAsUnsigned() + 12
         offset_type = raw_ptr_mib.GetType()
         print("[*]Register:{0}\n[*]Address of mib[0]:{1}".format(target_register, raw_ptr_mib.GetValue()))
-        print("[*]mib[0]:{0}\n[*]mib[3]:{1}".format(raw_ptr_mib.GetValueAsUnsigned(), offset))
-        val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(raw_ptr_mib.GetValueAsUnsigned(), lldb.target), offset_type)
-        print(val.GetValueAsUnsigned(), type(val))
+        print("[*]mib[0]:{0}\n[*]mib[3]:{1}\t(offset)".format(raw_ptr_mib.GetValueAsUnsigned(), offset))
+        print(raw_ptr_mib.GetType().GetPointeeType())
+        val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), offset_type)
+        print(raw_ptr_mib.GetType(), val.GetValue(), type(val))
         if 1 == process.GetProcessID():
             print("[*]Read PID from MIB array:{0}".format(pid_from_mib))
             ppid = sbframe.EvaluateExpression('(int *)getppid();', options)
@@ -324,7 +325,7 @@ def __thread_printer_func(thread):
 
 def __frame_beautify(debugger, command, result, internal_dict):
     """
-        Prints a prettier frame
+        Prints a prettier list of frames
     """
     target = debugger.GetSelectedTarget()
     process = target.GetProcess()
