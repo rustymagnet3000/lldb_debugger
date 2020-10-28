@@ -18,7 +18,8 @@
 - [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
 - [lldb with C code](#lldb-with-c-code)
 - [Read Pointer Array](#read-pointer-array)
-- [The fun of decayed Pointers](#the-fun-of-decayed-pointers)
+- [Cast](#cast)
+- [Decaying Pointers](#decaying-pointers)
 - [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
 - [Structs](#structs)
 - [Advanced](#advanced)
@@ -768,6 +769,9 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()'.
 >>> print(ptr.GetValue())       // this prints the value NOT the offset
 0x00007ffeefbff4f0
 
+>>> print(ptr.GetType())
+float *
+
 >>> print(ptr.GetLoadAddress())
 140732920755400
 
@@ -793,37 +797,79 @@ float
 (140732920755452, '4')
 ```
 
-### The fun of decayed Pointers
-In a stripped binary - you can get a value from a register - as you will know the register position from documentation.  But you won't have a variable symbol name.  You will probably have a decayed pointer.  For example:
+### Cast
+In a stripped binary - you can get a value from a register - as you will know the register position from documentation.  But you won't have a variable symbol name and will probably need to help lldb with the Type.  For example:
 ```
+// same information in `input` and `arg1`
+
+// debug build
 (lldb) fr v -L
 0x00007ffeefbff4c8: (int *) input = 0x00007ffeefbff4f0
 
 (lldb) script
+>>> ptr = lldb.frame.FindVariable('input')
+>>> print(ptr.GetType())
+int *
 
->>> int_ptr = lldb.frame.FindRegister("arg1")
+```
+Working with a stripped binary:
+```
+>>> ptr = lldb.frame.FindRegister("arg1")
 
->>> print(int_ptr)
-(unsigned long) rdi = 0x00007ffeefbff4f0
-
->>> print(type(int_ptr))
-<class 'lldb.SBValue'>
-
->>> print(int_ptr.GetValue())
-0x00007ffeefbff4f0
-
-print(int_ptr.GetType())
+>>> print(ptr.GetType())
 unsigned long
+
+>>> print(ptr.GetNumChildren())
+1
+```
+Were you expecting it to have 4?  Lldb doesn't even know it is a pointer to a single or array of integers.  At this point you get stuck, unless you help lldb. Stuck?
+```
+>>> options = lldb.SBExpressionOptions()
+
+// help lldb by casting to int *
+>>> val = lldb.frame.EvaluateExpression("(int *) $arg1", options)
+>>> print(val)
+(int *) $0 = 0x00007ffeefbff4f0
+>>> print(val.GetType())
+int *
+```
+### Decaying Pointers
+##### Source code
+```
+void foo_void (int *input)
+{
+    printf("Pointer: %p.\n", input);
+}
+
+int main (void) {
+
+    int tiny_array[4];
+    tiny_array[0] = 1;
+    tiny_array[1] = 2;
+    tiny_array[2] = 3;
+    tiny_array[3] = 4;
+
+    foo_void (tiny_array);
+
+    return 0;
+}
+```
+When the breakpoint fires - by helping lldb -  with a stripped, decayed pointer:
+```
+>>> val = lldb.frame.EvaluateExpression("(int *) $arg1", options)
+>>> print(val)
+(int *) $0 = 0x00007ffeefbff4f0
+
+>>> print(val.GetType())
+int *
 ```
 
 We don't have the `Load Address`.  We have the memory address of where our 1,2,3,4 values are sitting.
 
 ```
->>> print(ptr.GetNumChildren())
-1
-```
-Were you expecting it to have 4?  Lldb doesn't even know it is an `int *`.
 
+```
+So back to our pointer.  We need to cast it to a (int *).
 
 ### Find, read and amend variable inside Parent Frame
 ##### Source code
