@@ -822,7 +822,7 @@ unsigned long
 >>> print(ptr.GetNumChildren())
 1
 ```
-Were you expecting it to have 4?  Lldb doesn't even know it is a pointer to a single or array of integers.  At this point you get stuck, unless you help lldb. Stuck?
+Were you expecting it to have 4?  Lldb doesn't even know it is a pointer to a single or array of integers.  At this point you get stuck, unless you help lldb.
 ```
 >>> options = lldb.SBExpressionOptions()
 
@@ -854,22 +854,53 @@ int main (void) {
     return 0;
 }
 ```
-When the breakpoint fires - by helping lldb -  with a stripped, decayed pointer:
+When the breakpoint fires - I want to modify `tiny_array[3]`.  First, I will cast the register value to the type you expect:
+
 ```
->>> val = lldb.frame.EvaluateExpression("(int *) $arg1", options)
->>> print(val)
+>>> ptr = lldb.frame.EvaluateExpression("(int *) $arg1", options)
+>>> print(ptr)
 (int *) $0 = 0x00007ffeefbff4f0
 
->>> print(val.GetType())
+>>> print(ptr.GetType())
 int *
-```
 
-We don't have the `Load Address`.  We have the memory address of where our 1,2,3,4 values are sitting.
+>>> ptr_type = ptr.GetType().GetPointeeType()
+int
+
+>>> ptr_size_type = ptr_type.GetByteSize()
+4
+
+>>> for i in range (0, 4):
+... 	offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
+... 	val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
+... 	print(offset, val.GetValue())
+...
+(140732920755440, '1')
+(140732920755444, '2')
+(140732920755448, '3')
+(140732920755452, '4')
+
+
+>>> offset = ptr.GetValueAsUnsigned() + 3 * ptr_size_type
+140732920755452
+
+>>> error = lldb.SBError()
+>>> new_value = '0xff'
+>>> result = lldb.process.WriteMemory(offset, new_value, error)
+>>> if not error.Success() or result != len(new_value):
+... 	print('SBProcess.WriteMemory() failed!')
+
+>>> for i in range (0, 4):
+... 	offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
+... 	val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
+... 	print(offset, val.GetValue())
+...
+(140732920755440, '1')
+(140732920755444, '2')
+(140732920755448, '3')
+(140732920755452, '3487026')
 
 ```
-
-```
-So back to our pointer.  We need to cast it to a (int *).
 
 ### Find, read and amend variable inside Parent Frame
 ##### Source code
