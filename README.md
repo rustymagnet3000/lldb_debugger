@@ -18,6 +18,7 @@
 - [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
 - [lldb with C code](#lldb-with-c-code)
 - [Read Pointer Array](#read-pointer-array)
+- [The fun of decayed Pointers](#the-fun-of-decayed-pointers)
 - [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
 - [Structs](#structs)
 - [Advanced](#advanced)
@@ -764,8 +765,11 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()'.
 
 >>> ptr = lldb.frame.FindVariable('input')
 
->>> print(ptr.GetValue())
+>>> print(ptr.GetValue())       // this prints the value NOT the offset
 0x00007ffeefbff4f0
+
+>>> print(ptr.GetLoadAddress())
+140732920755400
 
 >>> ptr_type = ptr.GetType().GetPointeeType()
 
@@ -788,6 +792,37 @@ float
 (140732920755448, '3')
 (140732920755452, '4')
 ```
+
+### The fun of decayed Pointers
+In a stripped binary - you can get a value from a register - as you will know the register position from documentation.  But you won't have a variable symbol name.  You will probably have a decayed pointer.  For example:
+```
+(lldb) fr v -L
+0x00007ffeefbff4c8: (int *) input = 0x00007ffeefbff4f0
+
+(lldb) script
+
+>>> int_ptr = lldb.frame.FindRegister("arg1")
+
+>>> print(int_ptr)
+(unsigned long) rdi = 0x00007ffeefbff4f0
+
+>>> print(type(int_ptr))
+<class 'lldb.SBValue'>
+
+>>> print(int_ptr.GetValue())
+0x00007ffeefbff4f0
+
+print(int_ptr.GetType())
+unsigned long
+```
+
+We don't have the `Load Address`.  We have the memory address of where our 1,2,3,4 values are sitting.
+
+```
+>>> print(ptr.GetNumChildren())
+1
+```
+Were you expecting it to have 4?  Lldb doesn't even know it is an `int *`.
 
 
 ### Find, read and amend variable inside Parent Frame
