@@ -31,7 +31,7 @@
 - [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
 - [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
 - [lldb lifting code ( iOS app )](#lldb-lifting-code-ios-app-)
-- [LLDB References](#lldb-references)
+- [lldb references](#lldb-references)
 
 <!-- /TOC -->
 
@@ -1477,8 +1477,6 @@ if disposition.unsigned == 2:
 ```
 The trick was `frame = exe_ctx.frame`.  If you didn't have this context - from https://lldb.llvm.org/use/python-reference.html - you would get stuck for hours / days.
 
-The full bypass code: https://github.com/rustymagnet3000/reverse_engineer_ios_with_debugger/blob/master/15_python_lldb_scripts/yd_pythonlldb_scripts.py
-
 ##### Try, try and try again
 Like most bypass code, I tried multiple ideas.  I removed the details of failed ones for brevity.  If you care, essentially they were:
 
@@ -1713,7 +1711,7 @@ NBPhoneNumberDesc
 
 
 
-### LLDB References
+### lldb references
 #### Man page
 http://lldb.llvm.org/man/lldb.html
 #### Patching code

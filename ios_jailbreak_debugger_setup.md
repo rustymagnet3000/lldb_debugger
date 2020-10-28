@@ -4,7 +4,7 @@
 ##### for lldb over USB access..
 `iproxy 6666 6666 &`       
 ##### For SSH over USB access...
-`iproxy 2222 22 &`        
+`iproxy 2222 22 &`
 ##### the final TTD list...
 - [x] `ssh -p 2222 root@localhost`   // SSH onto jailbroken device
 - [x] `ps -ax | grep -i my_app` //  get your process ID 
