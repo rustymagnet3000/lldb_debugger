@@ -1,4 +1,43 @@
 # The LLDB Debugger
+<!-- TOC depthFrom:3 depthTo:3 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [Finding variables](#finding-variables)
+- [Getting started](#getting-started)
+- [Disassemble](#disassemble)
+- [Registers](#registers)
+- [Print](#print)
+- [Breakpoints](#breakpoints)
+- [Memory](#memory)
+- [Scripting](#scripting)
+- [Watchpoint](#watchpoint)
+- [Settings](#settings)
+- [Scripts](#scripts)
+- [Aliases](#aliases)
+- [lldb with Swift](#lldb-with-swift)
+- [lldb with Objective C](#lldb-with-objective-c)
+- [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
+- [lldb with C code](#lldb-with-c-code)
+- [Read Pointer Array](#read-pointer-array)
+- [Cast](#cast)
+- [Stripped Binary, decayed pointers and writing to memory](#stripped-binary-decayed-pointers-and-writing-to-memory)
+- [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
+- [Structs](#structs)
+- [Symbols](#symbols)
+- [Advanced](#advanced)
+- [Endians](#endians)
+- [stdout](#stdout)
+- [Playing with the User Interface](#playing-with-the-user-interface)
+- [Facebook's Chisel](#facebooks-chisel)
+- [Thread Pause / Thread Exit](#thread-pause-thread-exit)
+- [help lldb by setting the language](#help-lldb-by-setting-the-language)
+- [lldb & rootless](#lldb-rootless)
+- [lldb bypass Certificate Pinning](#lldb-bypass-certificate-pinning)
+- [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
+- [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
+- [lldb lifting code ( iOS app )](#lldb-lifting-code-ios-app-)
+- [lldb references](#lldb-references)
+
+<!-- /TOC -->
 
 
 ### Finding variables
@@ -800,7 +839,7 @@ Were you expecting it to have 4 children?  Lldb doesn't even know it is a pointe
 >>> print(val.GetType())
 int *
 ```
-### Decaying Pointers
+### Stripped Binary, decayed pointers and writing to memory
 ##### Source code
 ```
 void foo_void (int *input)
@@ -838,29 +877,32 @@ int
 >>> ptr_size_type = ptr_type.GetByteSize()
 4
 
->>> for i in range (0, 4):
-... 	offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
-... 	val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
-... 	print(offset, val.GetValue())
-...
-(140732920755440, '1')
-(140732920755444, '2')
-(140732920755448, '3')
-(140732920755452, '4')
-
-
 >>> offset = ptr.GetValueAsUnsigned() + 3 * ptr_size_type
 140732920755452
 
 >>> error = lldb.SBError()
->>> new_value = '0xff'
->>> result = lldb.process.WriteMemory(offset, new_value, error)
->>> if not error.Success() or result != len(new_value):
+>>> new_int_as_bytes = str('\xFF\x00\x00\x00')
+>>> result = lldb.process.WriteMemory(offset, new_int_as_bytes, error)
+>>> if not error.Success() or result != len(new_int_as_bytes):
 ... 	print('SBProcess.WriteMemory() failed!')
+
+>>> offset = ptr.GetValueAsUnsigned() + 3 * ptr_size_type
+>>> print(lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type))
+(int) temp = 255
+
+>>> for i in range (0, 4):
+... 	offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
+... 	val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
+... 	print(offset, val.GetValueAsUnsigned())
+
+(140732920755440, '1')
+(140732920755444, '2')
+(140732920755448, '3')
+(140732920755452, '32')
 
 >>> exit
 (lldb) mem read 0x00007ffeefbff4f0 -c 16
-0x7ffeefbff4f0: 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
+0x7ffeefbff4f0: 01 00 00 00 02 00 00 00 03 00 00 00 ff 00 00 00
 ```
 
 ### Find, read and amend variable inside Parent Frame
