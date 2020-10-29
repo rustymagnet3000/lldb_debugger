@@ -1,42 +1,5 @@
 # The LLDB Debugger
-<!-- TOC depthFrom:3 depthTo:3 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-- [Finding variables](#finding-variables)
-- [Getting started](#getting-started)
-- [Disassemble](#disassemble)
-- [Registers](#registers)
-- [Print](#print)
-- [Breakpoints](#breakpoints)
-- [Memory](#memory)
-- [Scripting](#scripting)
-- [Watchpoint](#watchpoint)
-- [Settings](#settings)
-- [Scripts](#scripts)
-- [Aliases](#aliases)
-- [lldb with Swift](#lldb-with-swift)
-- [lldb with Objective C](#lldb-with-objective-c)
-- [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
-- [lldb with C code](#lldb-with-c-code)
-- [Read Pointer Array](#read-pointer-array)
-- [Cast](#cast)
-- [Decaying Pointers](#decaying-pointers)
-- [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
-- [Structs](#structs)
-- [Symbols](#symbols)
-- [Advanced](#advanced)
-- [stdout](#stdout)
-- [Playing with the User Interface](#playing-with-the-user-interface)
-- [Facebook's Chisel](#facebooks-chisel)
-- [Thread Pause / Thread Exit](#thread-pause-thread-exit)
-- [help lldb by setting the language](#help-lldb-by-setting-the-language)
-- [lldb & rootless](#lldb-rootless)
-- [lldb bypass Certificate Pinning](#lldb-bypass-certificate-pinning)
-- [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
-- [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
-- [lldb lifting code ( iOS app )](#lldb-lifting-code-ios-app-)
-- [lldb references](#lldb-references)
-
-<!-- /TOC -->
 
 ### Finding variables
 ##### Frame
@@ -807,13 +770,16 @@ In a stripped binary - you can get a value from a register - as you will know th
 (lldb) fr v -L
 0x00007ffeefbff4c8: (int *) input = 0x00007ffeefbff4f0
 
+(lldb) mem read 0x00007ffeefbff4f0 -c 16
+0x7ffeefbff4f0: 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
+
 (lldb) script
 >>> ptr = lldb.frame.FindVariable('input')
 >>> print(ptr.GetType())
 int *
 
 ```
-Working with a stripped binary:
+What happens if I don't have debug symbols ?  
 ```
 >>> ptr = lldb.frame.FindRegister("arg1")
 
@@ -823,7 +789,7 @@ unsigned long
 >>> print(ptr.GetNumChildren())
 1
 ```
-Were you expecting it to have 4?  Lldb doesn't even know it is a pointer to a single or array of integers.  At this point you get stuck, unless you help lldb.
+Were you expecting it to have 4 children?  Lldb doesn't even know it is a pointer to a single integer or array of integers.  At this point you are stuck, unless you help lldb.
 ```
 >>> options = lldb.SBExpressionOptions()
 
@@ -858,6 +824,7 @@ int main (void) {
 When the breakpoint fires - I want to modify `tiny_array[3]`.  First, I will cast the register value to the type you expect:
 
 ```
+>>> options = lldb.SBExpressionOptions()
 >>> ptr = lldb.frame.EvaluateExpression("(int *) $arg1", options)
 >>> print(ptr)
 (int *) $0 = 0x00007ffeefbff4f0
@@ -891,16 +858,9 @@ int
 >>> if not error.Success() or result != len(new_value):
 ... 	print('SBProcess.WriteMemory() failed!')
 
->>> for i in range (0, 4):
-... 	offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
-... 	val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
-... 	print(offset, val.GetValue())
-...
-(140732920755440, '1')
-(140732920755444, '2')
-(140732920755448, '3')
-(140732920755452, '3487026')
-
+>>> exit
+(lldb) mem read 0x00007ffeefbff4f0 -c 16
+0x7ffeefbff4f0: 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
 ```
 
 ### Find, read and amend variable inside Parent Frame
@@ -1012,6 +972,9 @@ LLDB commands:
 (lldb) fr v -L
 0x00007ffeefbff528: (void *) input = 0x00007ffeefbff550
 
+(lldb) mem read 0x00007ffeefbff4f0 -c 16
+0x7ffeefbff4f0: 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00
+
 (lldb) script
 
 >>> ptr_type = lldb.target.FindFirstType('Foo').GetPointerType()
@@ -1073,7 +1036,19 @@ struct Foo *
 ##### Print with NSLog
 `exp (void)NSLog(@"😀foobar woobar");`  // on a real iOS device, you don't need to `caflush` for this to appear in `console.app`
 
+### Endians
+```
+>>> if byteOrder == lldb.eByteOrderLittle:
+... 	pass
+... elif byteOrder == lldb.eByteOrderBig:
+... 	print("big endian")
+...   byteOrder.reverse()
 
+>>> print(lldb.eByteOrderLittle)
+4
+>>> print(lldb.eByteOrderBig)
+1
+```
 ### stdout
 If you use `lldb --wait-for` or `lldb -attach` you are attaching **after** a decision on where to send `stdout` was made.  For example:
 
