@@ -22,6 +22,7 @@
 - [Decaying Pointers](#decaying-pointers)
 - [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
 - [Structs](#structs)
+- [Symbols](#symbols)
 - [Advanced](#advanced)
 - [stdout](#stdout)
 - [Playing with the User Interface](#playing-with-the-user-interface)
@@ -1035,7 +1036,20 @@ struct Foo *
 >>> root.GetChildAtIndex(1).GetValue()
 '222'
 ```
+### Symbols
+```
+>>> process = lldb.debugger.GetSelectedTarget().GetProcess()
+>>> target = debugger.GetSelectedTarget()
+>>> target = lldb.debugger.GetSelectedTarget()
+>>> module = target.GetModuleAtIndex(0)
+>>> print(type(module))
+<class 'lldb.SBModule'>
 
+>>> for symbol in module:
+... 	name = symbol.GetName()
+... 	saddr = symbol.GetStartAddress()
+... 	print(name, saddr)
+```
 ### Advanced
 ##### Check versions ( python, lldb )
 `script import sys; print(sys.version)`
