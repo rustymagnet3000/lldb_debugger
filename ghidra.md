@@ -1,4 +1,10 @@
 # Patch macOS app with Ghidra
+##### Install / Update
+```
+brew cask install ghidra              
+brew cask install adoptopenjdk        // requires Java 11 to run
+ghidraRun                             // no requirement to add a $PATH variable manually
+```
 ##### Reminders
 
 Area | Tip  

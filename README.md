@@ -208,6 +208,16 @@ Enter your Python command(s). Type 'DONE' to end.
 ##### Read 100 bytes from address
 `memory read -c100 0x10793362c`
 
+##### Find every "B" character. Stop after 5 matches.
+```
+(lldb) mem find -s "B" -c 5 -- 0x00000100000000 0x00000100004000
+data found at location: 0x10000063b
+0x10000063b: 42 2e 64 79 6c 69 62 00 00 00 00 00 00 26 00 00  B.dylib......&..
+data found at location: 0x100003f60
+0x100003f60: 42 00 00 00 61 00 00 00 62 00 00 00 6f 00 00 00  B...a...b...o...
+0x100003f70: 6f 00 00 00 6e 00 00 00 00 00 00 00 0a 5b 2a 5d  o...n........[*]
+no more matches within the range.
+```
 ### Scripting
 ```
 //See how many times a C function is called when running an iOS app.
@@ -821,11 +831,10 @@ int *
 What happens if I don't have debug symbols ?  
 ```
 >>> ptr = lldb.frame.FindRegister("arg1")
-
 >>> print(ptr.GetType())
 unsigned long
 
->>> print(ptr.GetNumChildren())
+>>> ptr.GetNumChildren()
 1
 ```
 Were you expecting it to have 4 children?  Lldb doesn't even know it is a pointer to a single integer or array of integers.  At this point you are stuck, unless you help lldb.
@@ -839,6 +848,7 @@ Were you expecting it to have 4 children?  Lldb doesn't even know it is a pointe
 >>> print(val.GetType())
 int *
 ```
+
 ### Stripped Binary, decayed pointers and writing to memory
 ##### Source code
 ```
