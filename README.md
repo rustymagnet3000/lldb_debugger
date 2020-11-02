@@ -38,7 +38,17 @@
 - [lldb references](#lldb-references)
 
 <!-- /TOC -->
-
+### Attach
+##### Load debugger
+`lldb`
+##### Launch code from within lldb
+`(lldb) process launch c_playground`
+##### Create target from within lldb
+`(lldb) target create patched.bin`
+##### Create a target
+`lldb --wait-for patched.bin`   // synonym of `target create patched.bin`
+##### Attach to running app
+`lldb -n open_app`
 
 ### Finding variables
 ##### Frame
