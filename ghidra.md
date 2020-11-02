@@ -16,7 +16,9 @@ Seek address  |  `/Navigation/Go To`
 Function Graph	|	Zoom in with Double click on Title Bar
 Symbol Tree	|	Filter for Global Var and right-click on Label `Show References To`
 Hex -> Decimal	|	Leave mouse cursor over a hex value and it display a pop-up of the Decimal value |  
-References to Address	|	This won't work until you analyze the binary |
+References to Address	|	This won't work until you analyze the binary
+Listing View | `/Windows/Listing` for the Hopper default view
+Search Memory| `/Search/Memory` and type in decimal value, string, hex
 
 ##### Search Memory
 ![memory_search](/images/2020/memory-search.png).
