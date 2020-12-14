@@ -100,7 +100,7 @@ Argument  | Register | x86_64  | arm64
 --|---|--|--
 Return  | -  | RAX | -
 First  | arg1 | RDI | x0
-Second  | arg2 | c | x1
+Second  | arg2 | RSI | x1
 Third  |  arg3| RDX |  x2
 Fourth  | arg4 | RCX  | x3
 Fifth  | arg5 | R8  | x4
