@@ -5,6 +5,7 @@
 import lldb
 from console import Console
 
+
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f python_lldb_scripts.__hello_world yd_hello_world')
     debugger.HandleCommand('command script add -f python_lldb_scripts.__where yd_where')
@@ -14,6 +15,36 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('command script add -f python_lldb_scripts.__thread_beautify yd_pretty_thread_list')
     debugger.HandleCommand('command script add -f python_lldb_scripts.__print_four_registers yd_registers_top4')
     debugger.HandleCommand('command script add -f python_lldb_scripts.__print_registers yd_registers_all')
+    debugger.HandleCommand('command script add -f python_lldb_scripts.__ios_urls yd_ios_urls')
+
+
+def __ios_urls(debugger, command, exe_ctx, result, internal_dict):
+    """
+        Used for iOS apps. Prints URLs that are set via NSURL.
+        Good way to show what an app is doing.
+    """
+    frame = exe_ctx.frame
+    if frame is None:
+        result.SetError('[!]You must have the process suspended in order to execute this command')
+        return
+    debugger.HandleCommand('breakpoint set -b "-[NSURL(NSURL) initWithString:]"  -N nsurlbr --auto-continue true')
+    debugger.HandleCommand('breakpoint command add -F python_lldb_scripts.__url_introspection nsurlbr')
+    print("[*]Set NSURL introspection!  Expect to see some URLs")
+
+
+def __url_introspection(sbframe, sbbreakpointlocation, dict):
+    """
+        When stopping inside of NSURL initWithString, we want to print the function argument to reveal what URLs were called.
+        Useful to detect when somebody is using a proxy unaware clients like openSSL to communicate.
+        #register $arg3 is URL value
+    """
+    hits = sbbreakpointlocation.GetHitCount()
+    register = 'arg3'
+    url_sb_value = sbframe.FindRegister(register)
+    print(f"NSURL\t{url_sb_value.GetObjectDescription()} \
+            : Hits={str(hits)} \
+            func_name:{sbframe.GetFunctionName()}"
+          )
 
 
 def __print_registers(debugger, command, exe_ctx, result, internal_dict):
@@ -99,6 +130,7 @@ def __get_bundle_id(debugger, command, result, internal_dict):
 def __thread_printer_func(thread):
   return "Thread %s has %d frames\n" % (thread.name, thread.num_frames)
 
+
 def __frame_beautify(debugger, command, result, internal_dict):
     """
         Prints a prettier list of frames
@@ -121,6 +153,7 @@ def __thread_beautify(debugger, command, result, internal_dict):
     debugger.HandleCommand(
         'settings set  thread-format \"thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n\"')
     debugger.HandleCommand('thread list')
+
 
 def __hello_world(debugger, command, result, internal_dict):
     """
