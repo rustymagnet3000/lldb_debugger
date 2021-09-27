@@ -1,6 +1,8 @@
 # The LLDB Debugger
-<!-- TOC depthFrom:3 depthTo:3 withLinks:1 updateOnSave:1 orderedList:0 -->
+<!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:false orderedlist:false -->
 
+- [Getting started](#getting-started)
+- [Attach](#attach)
 - [Finding variables](#finding-variables)
 - [Getting started](#getting-started)
 - [Disassemble](#disassemble)
@@ -11,8 +13,6 @@
 - [Scripting](#scripting)
 - [Watchpoint](#watchpoint)
 - [Settings](#settings)
-- [Scripts](#scripts)
-- [Aliases](#aliases)
 - [lldb with Swift](#lldb-with-swift)
 - [lldb with Objective C](#lldb-with-objective-c)
 - [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
@@ -28,27 +28,60 @@
 - [stdout](#stdout)
 - [Playing with the User Interface](#playing-with-the-user-interface)
 - [Facebook's Chisel](#facebooks-chisel)
-- [Thread Pause / Thread Exit](#thread-pause-thread-exit)
+- [Thread Pause / Thread Exit](#thread-pause--thread-exit)
 - [help lldb by setting the language](#help-lldb-by-setting-the-language)
-- [lldb & rootless](#lldb-rootless)
+- [lldb & rootless](#lldb--rootless)
 - [lldb bypass Certificate Pinning](#lldb-bypass-certificate-pinning)
 - [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
 - [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
-- [lldb lifting code ( iOS app )](#lldb-lifting-code-ios-app-)
+- [lldb lifting code  iOS app](#lldb-lifting-code--ios-app)
 - [lldb references](#lldb-references)
 
 <!-- /TOC -->
+
+### Quickstart
+
+It is hard to do things quickly in `lldb` unless you have set up an `lldbinit` file.
+
+```bash
+cat ~/.lldbinit 
+# Great scripts from ttps://github.com/DerekSelander/LLDB
+command script import ~/Coding/LLDB/lldb_commands/dslldb.py
+# Facebook's chisel
+command script import /usr/local/opt/chisel/libexec/fbchisellldb.py
+# Personal commands
+command script import python_lldb_scripts.py
+# Aliases
+command alias -h "Run a command in the UNIX shell." -- yd_shell platform shell
+command alias yd_thread_beautify settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
+command alias yd_register_beautify register read -f d
+command alias yd_smoke exp let $z = 5
+command alias yd_swift settings set target.language swift
+command alias yd_objc settings set target.language objc
+command alias yd_c settings set target.language c
+command alias yd_stack_vars frame variable --no-args
+command alias yd_attach process connect connect://localhost:6666
+```
+
 ### Attach
-##### Load debugger
-`lldb`
-##### Launch code from within lldb
-`(lldb) process launch c_playground`
-##### Create target from within lldb
-`(lldb) target create patched.bin`
-##### Create a target
-`lldb --wait-for patched.bin`   // synonym of `target create patched.bin`
-##### Attach to running app
+
+```bash
+# Load debugger
+lldb
+
+# Launch code from within lldb
+(lldb) process launch c_playground
+
+# Create target from within lldb
+(lldb) target create patched.bin
+
+# Create a target
+lldb --wait-for patched.bin
+(lldb) target create patched.bin
+
+# Attach to running app
 `lldb -n open_app`
+```
 
 ### Finding variables
 ##### Frame
@@ -272,38 +305,6 @@ continue
 `echo "settings set target.x86-disassembly-flavor intel" >> ~/.lldbinit`
 ##### Logging
 `settings set target.process.extra-startup-command QSetLogging:bitmask=LOG_ALL;`
-
-
-### Scripts
-```
-command alias yd_reload_lldbinit command source ~/.lldbinit
-command script import /usr/local/opt/chisel/libexec/fblldb.py   // https://github.com/facebook/chisel
-command script import ~/lldb_commands/dslldb.py                 // https://github.com/DerekSelander/LLDB
-```
-### Aliases
-##### extend your commands
-```
-command alias -h "Run a command in the UNIX shell." -- yd_shell platform shell
-command alias -h "add: <search_term> -m module" yd_lookup lookup -X (?i)
-command alias yd_dump image dump symtab -m C_Playground
-```
-##### Beautify
-```
-settings show thread-format
-command alias yd_thread_beautify settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
-command alias yd_register_beautify register read -f d
-```
-##### lldb context
-```
-command alias yd_smoke exp let $z = 5
-command alias yd_swift settings set target.language swift
-command alias yd_objc settings set target.language objc
-command alias yd_c settings set target.language c
-command alias yd_stack_vars frame variable --no-args
-```
-
-##### lldb over USB
-`command alias yd_attach process connect connect://localhost:6666`
 
 ### lldb with Swift
 ```

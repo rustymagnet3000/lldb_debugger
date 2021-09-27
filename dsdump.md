@@ -1,11 +1,12 @@
-https://derekselander.github.io/dsdump/#apples_mach-o_file_format
-
 # dsdump
+
+[Source](https://derekselander.github.io/dsdump/#apples_mach-o_file_format)
+```bash
 ➜dsdump
 Version: Beta 6 Built: (22:00:50, Dec  8 2019) dsdump [option..] <mach-o-file>
+```
 
-➜cat weird.swift 
-
+```swift
 import UIKit
 class ViewController : UIViewController {
   var meh: Int = 4
@@ -15,21 +16,18 @@ class ViewController : UIViewController {
   }
   func swiftFunc() { }
 }
-
+```
 
 swiftc weird.swift -sdk `xcrun --show-sdk-path  -sdk iphoneos` -target arm64-apple-ios99.99.99.9
 
-
-
+```bash
 jtool -l weird
 LC 08: LC_LOAD_DYLINKER      	/usr/lib/dyld
 LC 09: LC_UUID               	UUID: 66282AD3-03D8-336E-A5C9-48305CA88CED
 LC 10: LC_BUILD_VERSION      	Build Version:           Platform: iOS 99.99.99
+```
 
-
-
-
-
+```bash
 ➜dsdump  --swift weird --verbose=4 --defined --color
  class weird.ViewController : UIViewController /System/Library/Frameworks/UIKit.framework/UIKit {
 
@@ -46,10 +44,6 @@ LC 10: LC_BUILD_VERSION      	Build Version:           Platform: iOS 99.99.99
 	0x10000721c  func ViewController.meh.setter // setter 
 	0x1000072dc  func ViewController.meh.modify // modifyCoroutine 
 	0x1000075a4  func ViewController.swiftFunc() // method 
- }
-
-
-
 
 ➜strip weird
 ➜dsdump  --swift weird --verbose=4 --defined --color
@@ -69,3 +63,6 @@ LC 10: LC_BUILD_VERSION      	Build Version:           Platform: iOS 99.99.99
 	0x1000072dc  func <stripped> // modifyCoroutine 
 	0x1000075a4  func <stripped> // method 
  }
+
+  }
+```
