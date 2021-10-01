@@ -1,7 +1,7 @@
 # The LLDB Debugger
 <!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:false orderedlist:false -->
 
-- [Getting started](#getting-started)
+- [Quickstart](#quickstart)
 - [Attach](#attach)
 - [Finding variables](#finding-variables)
 - [Getting started](#getting-started)
@@ -45,13 +45,13 @@ It is hard to do things quickly in `lldb` unless you have set up an `lldbinit` f
 
 ```bash
 cat ~/.lldbinit 
-# Great scripts from ttps://github.com/DerekSelander/LLDB
-command script import ~/Coding/LLDB/lldb_commands/dslldb.py
+# Great scripts from https://github.com/DerekSelander/LLDB
+command script import ~/LLDB/lldb_commands/dslldb.py
 # Facebook's chisel
 command script import /usr/local/opt/chisel/libexec/fbchisellldb.py
 # Personal commands
 command script import python_lldb_scripts.py
-# Aliases
+q
 command alias -h "Run a command in the UNIX shell." -- yd_shell platform shell
 command alias yd_thread_beautify settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
 command alias yd_register_beautify register read -f d
@@ -60,7 +60,8 @@ command alias yd_swift settings set target.language swift
 command alias yd_objc settings set target.language objc
 command alias yd_c settings set target.language c
 command alias yd_stack_vars frame variable --no-args
-command alias yd_attach process connect connect://localhost:6666
+# Connect to port
+command alias yd_connect process connect connect://localhost:6666
 ```
 
 ### Attach
