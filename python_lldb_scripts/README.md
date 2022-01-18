@@ -1,16 +1,18 @@
 ## Using Python to write LLDB scripts
+
 ### Basics
-```
-(lldb) script print lldb.target
+
+```bash
+(lldb) script print(lldb.target)
 SampleApp-Swift
 
-(lldb) script print lldb.thread
+(lldb) script print(lldb.thread)
 thread #1: tid = 0x67f3e, 0x0000000108005244 SampleApp-Swift`main at AppDelegate.swift:14, queue = 'com.apple.main-thread', stop reason = breakpoint 1.4
 
-(lldb) script print lldb.process
+(lldb) script print(lldb.process)
 SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swift
 
-(lldb) print lldb.frame.registers
+(lldb) print(lldb.frame.registers)
 
 (lldb) script lldb.debugger.HandleCommand("frame info")
 ```
@@ -41,8 +43,51 @@ SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swi
 ... long description of Blocks of code.
 ... another long description of Blocks of code.
 ```
-### Print the correct thing
+
+### SBValue (get string vlaue)
+
+```bash
+(lldb) breakpoint set -b "-[NSURL(NSURL) initWithString:]"                                                                                         Breakpoint 9: where = Foundation`-[NSURL(NSURL) initWithString:], address = 0x0000000182726484
+
+Target 0: (debugger_challenge) stopped.
+
+(lldb) script
+Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
+
+>>> frame = lldb.frame
+>>> print(frame)
+frame #0: 0x0000000182726484 Foundation` -[NSURL(NSURL) initWithString:] 
+
+>>> print(frame.GetFunctionName())
+-[NSURL(NSURL) initWithString:]
+
+>>> str_ptr = frame.FindRegister('arg3')
+
+>>> print(str_ptr)
+(unsigned long) x3 = 0x0000000000012557
+
+>>> print(type(str_ptr))
+<class 'lldb.SBValue'>
+
+>>> print(reg)
+(unsigned long) x2 = 0x00000001c8052450
+
+>>> print(reg.value)
+0x00000001c8052450
+
+>>> print(reg.GetValue())
+0x00000001c8052450
+
+>>> print(reg.description)
+https://www.httpbin.org/get
+
+>>> print(reg.GetObjectDescription())
+https://www.httpbin.org/get
 ```
+
+### Print the correct thing
+
+```bash
 >>> print(lldb.SBFrame)
 <class 'lldb.SBFrame'>
 
