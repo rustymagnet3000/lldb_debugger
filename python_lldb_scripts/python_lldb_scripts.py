@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # ----------------------------------------------------------------------
-#  load / reload script:  (lldb) command script import python_lldb_scripts.py
+# reload all:       (lldb) reload_lldbinit
+# reload single:    (lldb) command script import python_lldb_scripts.py
 # ----------------------------------------------------------------------
 import lldb
 from console import Console
@@ -121,10 +122,10 @@ def __get_bundle_id(debugger, command, result, internal_dict):
     mainThread = process.GetThreadAtIndex(0)
     currentFrame = mainThread.GetSelectedFrame()
     bundle_id = currentFrame.EvaluateExpression("(NSString *)[[NSBundle mainBundle] bundleIdentifier]").GetObjectDescription()
-    print("[*]Bundle Identifier:")
-    if not bundle_id:
-        result.AppendMessage("[*]No bundle ID available. Did you stop before the AppDelegate?")
-    result.AppendMessage(bundle_id)
+    if bundle_id is None:
+        result.AppendMessage("[*]No Bundle ID available. Did you stop before the AppDelegate?")
+    else:
+        result.AppendMessage(f"[*]Bundle ID:\t{bundle_id}")
 
 
 def __thread_printer_func(thread):
@@ -143,7 +144,7 @@ def __frame_beautify(debugger, command, result, internal_dict):
         if not frame.IsValid():
             print("[*] no frame here. did you stop too early?")
         else:
-            print >> result, str(frame)
+            print(f"{str(frame)}")
 
 
 def __thread_beautify(debugger, command, result, internal_dict):

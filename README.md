@@ -1,38 +1,9 @@
 # The LLDB Debugger
-<!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:save orderedlist:false -->
+<!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:false orderedlist:false -->
 
 - [Quickstart](#quickstart)
 - [Attach](#attach)
 - [Finding variables](#finding-variables)
-- [Getting started](#getting-started)
-- [Disassemble](#disassemble)
-- [Registers](#registers)
-- [Print](#print)
-- [Breakpoints](#breakpoints)
-- [Memory](#memory)
-- [Scripting](#scripting)
-- [Watchpoint](#watchpoint)
-- [Settings](#settings)
-- [lldb with Swift](#lldb-with-swift)
-- [lldb with Objective C](#lldb-with-objective-c)
-- [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
-- [lldb with C code](#lldb-with-c-code)
-- [Read Pointer Array](#read-pointer-array)
-- [Cast](#cast)
-- [Stripped Binary, decayed pointers and writing to memory](#stripped-binary-decayed-pointers-and-writing-to-memory)
-- [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
-- [Structs](#structs)
-- [Symbols](#symbols)
-- [Advanced](#advanced)
-- [Endians](#endians)
-- [stdout](#stdout)
-- [Playing with the User Interface](#playing-with-the-user-interface)
-- [Facebook's Chisel](#facebooks-chisel)
-- [Thread Pause / Thread Exit](#thread-pause--thread-exit)
-- [help lldb by setting the language](#help-lldb-by-setting-the-language)
-- [lldb & rootless](#lldb--rootless)
-- [lldb bypass Certificate Pinning](#lldb-bypass-certificate-pinning)
-- [lldb on Jailbroken iOS device](#lldb-on-jailbroken-ios-device)
 - [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
 - [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
 - [lldb lifting code  iOS app](#lldb-lifting-code--ios-app)
@@ -82,55 +53,80 @@ lldb --wait-for patched.bin
 (lldb) target create patched.bin
 
 # Attach to running app
-`lldb -n open_app`
+lldb -n open_app
 ```
 
 ### Finding variables
-##### Frame
-`frame info`
-##### Print variables in the Frame
-`frame variable -A -T`
-##### Get pointer to variables inside the Frame
-`fr v -L`
-##### Show the current thread's call stack
-`bt`
-##### Move to another Frame to find variables
-`frame select 1`
+
+```bash
+# Frame
+frame info
+
+# Print variables in the Frame
+frame variable -A -T
+
+# Get pointer to variables inside the Frame
+fr v -L
+
+# Show the current thread's call stack
+bt
+
+# Move to another Frame to find variables
+frame select 1
+```
 
 ### Getting started
-##### Thread
-`thread list`
-##### Brief list of attached Libraries
-`image list -b`
-##### Sections of all loaded code
-`image dump sections`
-##### Sections of a Module
-`image dump sections myApp`
-##### Symbols of a Module
-`image dump symtab myApp`
-##### Symbols of all loaded code (BAD IDEA)
-`image dump symtab`
-##### Lookup options:
-`help image lookup`
-##### Lookup a Debug Symbol
-`image lookup -r -n YDClass`
-##### Lookup non-debug symbols:
-`image lookup -r -s YDClass`
-##### Lookup Address:
-`image lookup -a 0x1000016a0`
-##### Search for Object on Heap:
-`search -r 0x0000000100610570`
 
+```bash
+# Threads
+thread list
+
+# Brief list of attached Libraries
+image list -b
+
+# Sections of all loaded code
+image dump sections
+
+# Sections of a Module
+image dump sections myApp
+
+# Symbols of a Module
+image dump symtab myApp
+
+# Symbols of all loaded code (BAD IDEA)
+image dump symtab
+
+# Lookup help
+help image lookup
+
+# Lookup a Debug Symbol
+image lookup -r -n YDClass
+
+# Lookup non-debug symbols
+image lookup -r -s YDClass
+
+# Lookup Address
+image lookup -a 0x1000016a0
+
+# Search for Object on Heap
+search -r 0x0000000100610570
+```
 
 ### Disassemble
-##### By address
-`disas -s 0x00001620`
-##### By function name
-`disas -n Foo.Bar`
-##### By ObjC method
-`disas -n "+[YDFileChecker asmSyscallFunction:]"`
+
+```bash
+# By address
+disas -s 0x00001620
+
+# By function name
+disas -n Foo.Bar
+
+# By ObjC method
+disas -n "+[YDFileChecker asmSyscallFunction:]"
+```
 
 ### Registers
+
 Argument  | Register | x86_64  | arm64
 --|---|--|--
 Return  | -  | RAX | -
@@ -142,81 +138,109 @@ Fifth  | arg5 | R8  | x4
 Sixth  | arg6 |  R9 | x5
 Syscalls  | - | syscall  | x16
 
-### Print
-##### Register
-`po $arg2`
-##### Hex to Decimal
-`p/d 0x1a        // (int) $2 = 26`
-##### Create char *
-`po char *$new`
-##### Check for substring in a register
-`po $new = (char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi))`
-##### Create NSString
-`exp NSString *$myMethod = NSStringFromSelector(_cmd)`
-##### Get Selector
-`po NSSelectorFromString($meth)`
+### Print and Expression
+
+```bash
+# Print a register with useful aliase
+po $arg2
+
+# Hex to Decimal
+p/d 0x1a        // (int) $2 = 26
+
+# Create char * and persist it ( the $ symbol )
+po char *$new
+
+# Check for substring in a register
+po $new = (char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi))
+
+# Create NSString from Selector
+exp NSString *$myMethod = NSStringFromSelector(_cmd)
+
+# Get Selector
+po NSSelectorFromString($meth)
+```
 
 ### Breakpoints
-##### Getting the options
-`help breakpoint set`
-#####  Options to add script to Breakpoint
-`help break command add`
-##### Delete all breakpoints
-`b delete`
-##### List
-`b list`
-##### Breakpoint on symbol name
-`b syscall`
-##### Breakpoint on fullname
-`breakpoint set -F access`
-##### Breakpoint on fullname in a single Module
-`breakpoint set -F access -s libsystem_kernel.dylib`
-##### Breakpoint on Name and give the breakpoint a name
-`b -n task_get_exception_ports -N fooName --auto-continue true`
-##### Breakpoint on Address ( gdb syntax )
-`b *0x1000016ce`
-##### Breakpoint on ObjC Class Method
-`b "+[YDFileChecker foobar:]"`
-##### Breakpoint on Function, name the breakpoint and set condition
-`br set -b "+[YDFileChecker foobar:]" -N fooName  -c "$arg1 == 0x33"`
-##### Breakpoint on Address with name (lldb syntax )
-`br s -a 0x1000016ce -N fooName`
-##### Break on Register value ( SVC calls )
-`b set -N fooName --auto-continue true -c $x16==26`
-##### Break on Register holding Info.plist substring
-`br s -n syscall -c '(char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi)) != NULL'`
-##### Breakpoint on Selector
-`breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:`
-##### Breakpoint on Selector in Module
-`breakpoint set --selector blah:blah: -s playModule`
-##### Regex Breakpoint on Selector ( good for Swift )
-`rb Foo.handleBarChallenge -s playModule -N fooName`
-##### Breakpoint naming
-`breakpoint set --selector blah:blah: -s objc_play -N fooName`
-##### Breakpoint condition
-`br mod -c $arg2 == "URLSession:didReceiveChallenge:completionHandler:" fooName`
-##### Break on exact ObjC Method
-`b "-[MyUser name:]"`
-##### Breakpoint on completionHandler
-`b -[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:]`
-#####  Regex Breakpoint
-`rb '\-\[UIViewController\ '`
-`rb '\-\[YDUser(\(\w+\))?\ '`
-`breakpoint set --func-regex=. --shlib=objc_play`
 
-#####  Python script when Breakpoint fires
-```
+```bash
+# Getting the options
+help breakpoint set
+
+#  Options to add script to Breakpoint
+help break command add
+
+# Delete all breakpoints
+b delete
+
+# List
+b list
+
+# Breakpoint on symbol name
+b syscall
+
+# Breakpoint on fullname
+breakpoint set -F access
+
+# Breakpoint on fullname in a single Module
+breakpoint set -F access -s libsystem_kernel.dylib
+
+# Breakpoint on Name and give the breakpoint a name
+b -n task_get_exception_ports -N fooName --auto-continue true
+
+# Breakpoint on Address ( gdb syntax )
+b *0x1000016ce
+
+# Breakpoint on ObjC Class Method
+b "+[YDFileChecker foobar:]"
+
+# Breakpoint on Function, name the breakpoint and set condition
+br set -b "+[YDFileChecker foobar:]" -N fooName  -c "$arg1 == 0x33"
+
+# Breakpoint on Address with name (lldb syntax )
+br s -a 0x1000016ce -N fooName
+
+# Break on Register value ( SVC calls )
+b set -N fooName --auto-continue true -c $x16==26
+
+# Break on Register holding Info.plist substring
+br s -n syscall -c '(char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi)) != NULL'
+
+# Breakpoint on Selector
+breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:
+
+# Breakpoint on Selector in Module
+breakpoint set --selector blah:blah: -s playModule
+
+# Regex Breakpoint on Selector ( good for Swift )
+rb Foo.handleBarChallenge -s playModule -N fooName
+
+# Breakpoint naming
+breakpoint set --selector blah:blah: -s objc_play -N fooName
+
+# Breakpoint condition
+br mod -c $arg2 == "URLSession:didReceiveChallenge:completionHandler:" fooName
+
+# Break on exact ObjC Method
+b "-[MyUser name:]"
+
+# Breakpoint on completionHandler
+b -[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:]
+
+#  Regex Breakpoint
+rb '\-\[UIViewController\ '
+rb '\-\[YDUser(\(\w+\))?\ '
+breakpoint set --func-regex=. --shlib=objc_play
+
+#  Python script when Breakpoint fires
 (lldb) breakpoint command add -s python fooName
 Enter your Python command(s). Type 'DONE' to end.
     print("[!]found it")
     DONE
-```
-##### Callback to Python function when Breakpoint hits
-```
+
+# Callback to Python function when Breakpoint hits
 (lldb) breakpoint command add -F ydscripts.YDHelloWorld fooName
-```
-#####  Add & continue Python script when Breakpoint fires
-```
+
+# Add & continue Python script when Breakpoint fires
 (lldb) breakpoint command add -s python fooName
     print lldb.frame.register["rsi"].value
     lldb.frame.register["rsi"].value = "1"
@@ -225,9 +249,8 @@ Enter your Python command(s). Type 'DONE' to end.
     process = thread.GetProcess()
     process.Continue()
     DONE
-```
-#####  Breakpoint all code inside a function
-```
+
+#  Breakpoint all code inside a function
 (lldb) script
 >>> for a in range(0x1000016bc, 0x1000016d1):
 ... 	lldb.target.BreakpointCreateByAddress(a)
