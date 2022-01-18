@@ -1,9 +1,38 @@
 # The LLDB Debugger
-<!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:false orderedlist:false -->
+<!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:true orderedlist:false -->
 
 - [Quickstart](#quickstart)
 - [Attach](#attach)
 - [Finding variables](#finding-variables)
+- [Getting started](#getting-started)
+- [Disassemble](#disassemble)
+- [Registers](#registers)
+- [Print and Expression](#print-and-expression)
+- [Breakpoints](#breakpoints)
+- [Memory](#memory)
+- [Scripting](#scripting)
+- [Watchpoint](#watchpoint)
+- [Settings](#settings)
+- [lldb with Swift](#lldb-with-swift)
+- [lldb with Objective C](#lldb-with-objective-c)
+- [lldb with Objective-C Blocks](#lldb-with-objective-c-blocks)
+- [lldb with C code](#lldb-with-c-code)
+- [Read Pointer Array](#read-pointer-array)
+- [Cast](#cast)
+- [Stripped Binary, decayed pointers and memory writes](#stripped-binary-decayed-pointers-and-memory-writes)
+- [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
+- [Structs](#structs)
+- [Symbols](#symbols)
+- [Advanced](#advanced)
+- [Endians](#endians)
+- [stdout](#stdout)
+- [Playing with the User Interface](#playing-with-the-user-interface)
+- [Facebook's Chisel](#facebooks-chisel)
+- [Thread Pause / Thread Exit](#thread-pause--thread-exit)
+- [help lldb by setting the language](#help-lldb-by-setting-the-language)
+- [lldb & rootless](#lldb--rootless)
+- [lldb bypass Certificate Pinning](#lldb-bypass-certificate-pinning)
+- [lldb on Jailbroken iOS device](#lldb-on-jailbroken-ios-device)
 - [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
 - [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
 - [lldb lifting code  iOS app](#lldb-lifting-code--ios-app)
@@ -847,11 +876,13 @@ float
 ```
 
 ### Cast
-In a stripped binary - you can get a value from a register - as you will know the register position from documentation.  But you won't have a variable symbol name and will probably need to help lldb with the Type.  For example:
-```
-// same information in `input` and `arg1`
 
-// debug build
+In a stripped binary - you can get a value from a register - as you will know the register position from documentation.  But you won't have a variable symbol name and will probably need to help lldb with the Type.  For example:
+
+```bash
+# same information in `input` and `arg1`
+
+# debug build
 (lldb) fr v -L
 0x00007ffeefbff4c8: (int *) input = 0x00007ffeefbff4f0
 
@@ -862,10 +893,11 @@ In a stripped binary - you can get a value from a register - as you will know th
 >>> ptr = lldb.frame.FindVariable('input')
 >>> print(ptr.GetType())
 int *
+```
 
-```
 What happens if I don't have debug symbols ?  
-```
+
+```bash
 >>> ptr = lldb.frame.FindRegister("arg1")
 >>> print(ptr.GetType())
 unsigned long
@@ -873,8 +905,10 @@ unsigned long
 >>> ptr.GetNumChildren()
 1
 ```
-Were you expecting it to have 4 children?  Lldb doesn't even know it is a pointer to a single integer or array of integers.  At this point you are stuck, unless you help lldb.
+
+Were you expecting it to have 4 children?  **lldb doesn't even know it is a pointer to a single integer or array of integers**.  At this point you are stuck, unless you help lldb.
 ```
+
 >>> options = lldb.SBExpressionOptions()
 
 // help lldb by casting to int *
@@ -885,9 +919,11 @@ Were you expecting it to have 4 children?  Lldb doesn't even know it is a pointe
 int *
 ```
 
-### Stripped Binary, decayed pointers and writing to memory
+### Stripped Binary, decayed pointers and memory writes
+
 ##### Source code
-```
+
+```c
 void foo_void (int *input)
 {
     printf("Pointer: %p.\n", input);
@@ -906,9 +942,10 @@ int main (void) {
     return 0;
 }
 ```
+
 When the breakpoint fires - I want to modify `tiny_array[3]`.  First, I will cast the register value to the type you expect:
 
-```
+```bash
 >>> options = lldb.SBExpressionOptions()
 >>> ptr = lldb.frame.EvaluateExpression("(int *) $arg1", options)
 >>> print(ptr)
@@ -952,8 +989,9 @@ int
 ```
 
 ### Find, read and amend variable inside Parent Frame
+
 ##### Source code
-```
+```c
 void foo_void ( float *input )
 {
     printf("Pointer: %p.\n", input);      <-- Breakpoint here
@@ -969,8 +1007,10 @@ int main ( void ) {
     return 0;
 }
 ```
+
 ##### Solution
-```
+
+```bash
 >>> print(lldb.frame.GetFunctionName())
 foo_void
 
