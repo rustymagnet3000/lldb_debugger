@@ -52,7 +52,7 @@ command script import ~/LLDB/lldb_commands/dslldb.py
 command script import /usr/local/opt/chisel/libexec/fbchisellldb.py
 # Personal commands
 command script import python_lldb_scripts.py
-q
+# Alias
 command alias -h "Run a command in the UNIX shell." -- yd_shell platform shell
 command alias yd_thread_beautify settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
 command alias yd_register_beautify register read -f d
@@ -61,7 +61,6 @@ command alias yd_swift settings set target.language swift
 command alias yd_objc settings set target.language objc
 command alias yd_c settings set target.language c
 command alias yd_stack_vars frame variable --no-args
-# Connect to port
 command alias yd_connect process connect connect://localhost:6666
 ```
 
