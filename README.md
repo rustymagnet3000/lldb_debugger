@@ -1,13 +1,13 @@
 # The LLDB Debugger
-<!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:false orderedlist:false -->
+<!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:true orderedlist:false -->
 
-- [Getting started](#getting-started)
+- [Quickstart](#quickstart)
 - [Attach](#attach)
 - [Finding variables](#finding-variables)
 - [Getting started](#getting-started)
 - [Disassemble](#disassemble)
 - [Registers](#registers)
-- [Print](#print)
+- [Print and Expression](#print-and-expression)
 - [Breakpoints](#breakpoints)
 - [Memory](#memory)
 - [Scripting](#scripting)
@@ -19,7 +19,7 @@
 - [lldb with C code](#lldb-with-c-code)
 - [Read Pointer Array](#read-pointer-array)
 - [Cast](#cast)
-- [Stripped Binary, decayed pointers and writing to memory](#stripped-binary-decayed-pointers-and-writing-to-memory)
+- [Stripped Binary, decayed pointers and memory writes](#stripped-binary-decayed-pointers-and-memory-writes)
 - [Find, read and amend variable inside Parent Frame](#find-read-and-amend-variable-inside-parent-frame)
 - [Structs](#structs)
 - [Symbols](#symbols)
@@ -32,6 +32,7 @@
 - [help lldb by setting the language](#help-lldb-by-setting-the-language)
 - [lldb & rootless](#lldb--rootless)
 - [lldb bypass Certificate Pinning](#lldb-bypass-certificate-pinning)
+- [lldb on Jailbroken iOS device](#lldb-on-jailbroken-ios-device)
 - [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
 - [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
 - [lldb lifting code  iOS app](#lldb-lifting-code--ios-app)
@@ -45,13 +46,13 @@ It is hard to do things quickly in `lldb` unless you have set up an `lldbinit` f
 
 ```bash
 cat ~/.lldbinit 
-# Great scripts from ttps://github.com/DerekSelander/LLDB
-command script import ~/Coding/LLDB/lldb_commands/dslldb.py
+# Great scripts from https://github.com/DerekSelander/LLDB
+command script import ~/LLDB/lldb_commands/dslldb.py
 # Facebook's chisel
 command script import /usr/local/opt/chisel/libexec/fbchisellldb.py
 # Personal commands
 command script import python_lldb_scripts.py
-# Aliases
+# Alias
 command alias -h "Run a command in the UNIX shell." -- yd_shell platform shell
 command alias yd_thread_beautify settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
 command alias yd_register_beautify register read -f d
@@ -60,7 +61,7 @@ command alias yd_swift settings set target.language swift
 command alias yd_objc settings set target.language objc
 command alias yd_c settings set target.language c
 command alias yd_stack_vars frame variable --no-args
-command alias yd_attach process connect connect://localhost:6666
+command alias yd_connect process connect connect://localhost:6666
 ```
 
 ### Attach
@@ -80,55 +81,80 @@ lldb --wait-for patched.bin
 (lldb) target create patched.bin
 
 # Attach to running app
-`lldb -n open_app`
+lldb -n open_app
 ```
 
 ### Finding variables
-##### Frame
-`frame info`
-##### Print variables in the Frame
-`frame variable -A -T`
-##### Get pointer to variables inside the Frame
-`fr v -L`
-##### Show the current thread's call stack
-`bt`
-##### Move to another Frame to find variables
-`frame select 1`
+
+```bash
+# Frame
+frame info
+
+# Print variables in the Frame
+frame variable -A -T
+
+# Get pointer to variables inside the Frame
+fr v -L
+
+# Show the current thread's call stack
+bt
+
+# Move to another Frame to find variables
+frame select 1
+```
 
 ### Getting started
-##### Thread
-`thread list`
-##### Brief list of attached Libraries
-`image list -b`
-##### Sections of all loaded code
-`image dump sections`
-##### Sections of a Module
-`image dump sections myApp`
-##### Symbols of a Module
-`image dump symtab myApp`
-##### Symbols of all loaded code (BAD IDEA)
-`image dump symtab`
-##### Lookup options:
-`help image lookup`
-##### Lookup a Debug Symbol
-`image lookup -r -n YDClass`
-##### Lookup non-debug symbols:
-`image lookup -r -s YDClass`
-##### Lookup Address:
-`image lookup -a 0x1000016a0`
-##### Search for Object on Heap:
-`search -r 0x0000000100610570`
 
+```bash
+# Threads
+thread list
+
+# Brief list of attached Libraries
+image list -b
+
+# Sections of all loaded code
+image dump sections
+
+# Sections of a Module
+image dump sections myApp
+
+# Symbols of a Module
+image dump symtab myApp
+
+# Symbols of all loaded code (BAD IDEA)
+image dump symtab
+
+# Lookup help
+help image lookup
+
+# Lookup a Debug Symbol
+image lookup -r -n YDClass
+
+# Lookup non-debug symbols
+image lookup -r -s YDClass
+
+# Lookup Address
+image lookup -a 0x1000016a0
+
+# Search for Object on Heap
+search -r 0x0000000100610570
+```
 
 ### Disassemble
-##### By address
-`disas -s 0x00001620`
-##### By function name
-`disas -n Foo.Bar`
-##### By ObjC method
-`disas -n "+[YDFileChecker asmSyscallFunction:]"`
+
+```bash
+# By address
+disas -s 0x00001620
+
+# By function name
+disas -n Foo.Bar
+
+# By ObjC method
+disas -n "+[YDFileChecker asmSyscallFunction:]"
+```
 
 ### Registers
+
 Argument  | Register | x86_64  | arm64
 --|---|--|--
 Return  | -  | RAX | -
@@ -140,81 +166,109 @@ Fifth  | arg5 | R8  | x4
 Sixth  | arg6 |  R9 | x5
 Syscalls  | - | syscall  | x16
 
-### Print
-##### Register
-`po $arg2`
-##### Hex to Decimal
-`p/d 0x1a        // (int) $2 = 26`
-##### Create char *
-`po char *$new`
-##### Check for substring in a register
-`po $new = (char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi))`
-##### Create NSString
-`exp NSString *$myMethod = NSStringFromSelector(_cmd)`
-##### Get Selector
-`po NSSelectorFromString($meth)`
+### Print and Expression
+
+```bash
+# Print a register with useful aliase
+po $arg2
+
+# Hex to Decimal
+p/d 0x1a        // (int) $2 = 26
+
+# Create char * and persist it ( the $ symbol )
+po char *$new
+
+# Check for substring in a register
+po $new = (char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi))
+
+# Create NSString from Selector
+exp NSString *$myMethod = NSStringFromSelector(_cmd)
+
+# Get Selector
+po NSSelectorFromString($meth)
+```
 
 ### Breakpoints
-##### Getting the options
-`help breakpoint set`
-#####  Options to add script to Breakpoint
-`help break command add`
-##### Delete all breakpoints
-`b delete`
-##### List
-`b list`
-##### Breakpoint on symbol name
-`b syscall`
-##### Breakpoint on fullname
-`breakpoint set -F access`
-##### Breakpoint on fullname in a single Module
-`breakpoint set -F access -s libsystem_kernel.dylib`
-##### Breakpoint on Name and give the breakpoint a name
-`b -n task_get_exception_ports -N fooName --auto-continue true`
-##### Breakpoint on Address ( gdb syntax )
-`b *0x1000016ce`
-##### Breakpoint on ObjC Class Method
-`b "+[YDFileChecker foobar:]"`
-##### Breakpoint on Function, name the breakpoint and set condition
-`br set -b "+[YDFileChecker foobar:]" -N fooName  -c "$arg1 == 0x33"`
-##### Breakpoint on Address with name (lldb syntax )
-`br s -a 0x1000016ce -N fooName`
-##### Break on Register value ( SVC calls )
-`b set -N fooName --auto-continue true -c $x16==26`
-##### Break on Register holding Info.plist substring
-`br s -n syscall -c '(char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi)) != NULL'`
-##### Breakpoint on Selector
-`breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:`
-##### Breakpoint on Selector in Module
-`breakpoint set --selector blah:blah: -s playModule`
-##### Regex Breakpoint on Selector ( good for Swift )
-`rb Foo.handleBarChallenge -s playModule -N fooName`
-##### Breakpoint naming
-`breakpoint set --selector blah:blah: -s objc_play -N fooName`
-##### Breakpoint condition
-`br mod -c $arg2 == "URLSession:didReceiveChallenge:completionHandler:" fooName`
-##### Break on exact ObjC Method
-`b "-[MyUser name:]"`
-##### Breakpoint on completionHandler
-`b -[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:]`
-#####  Regex Breakpoint
-`rb '\-\[UIViewController\ '`
-`rb '\-\[YDUser(\(\w+\))?\ '`
-`breakpoint set --func-regex=. --shlib=objc_play`
 
-#####  Python script when Breakpoint fires
-```
+```bash
+# Getting the options
+help breakpoint set
+
+#  Options to add script to Breakpoint
+help break command add
+
+# Delete all breakpoints
+b delete
+
+# List
+b list
+
+# Breakpoint on symbol name
+b syscall
+
+# Breakpoint on fullname
+breakpoint set -F access
+
+# Breakpoint on fullname in a single Module
+breakpoint set -F access -s libsystem_kernel.dylib
+
+# Breakpoint on Name and give the breakpoint a name
+b -n task_get_exception_ports -N fooName --auto-continue true
+
+# Breakpoint on Address ( gdb syntax )
+b *0x1000016ce
+
+# Breakpoint on ObjC Class Method
+b "+[YDFileChecker foobar:]"
+
+# Breakpoint on Function, name the breakpoint and set condition
+br set -b "+[YDFileChecker foobar:]" -N fooName  -c "$arg1 == 0x33"
+
+# Breakpoint on Address with name (lldb syntax )
+br s -a 0x1000016ce -N fooName
+
+# Break on Register value ( SVC calls )
+b set -N fooName --auto-continue true -c $x16==26
+
+# Break on Register holding Info.plist substring
+br s -n syscall -c '(char *) strnstr((char *)$rsi, "Info.plist", (int)strlen((char *) $rsi)) != NULL'
+
+# Breakpoint on Selector
+breakpoint set --selector URLSession:didReceiveChallenge:completionHandler:
+
+# Breakpoint on Selector in Module
+breakpoint set --selector blah:blah: -s playModule
+
+# Regex Breakpoint on Selector ( good for Swift )
+rb Foo.handleBarChallenge -s playModule -N fooName
+
+# Breakpoint naming
+breakpoint set --selector blah:blah: -s objc_play -N fooName
+
+# Breakpoint condition
+br mod -c $arg2 == "URLSession:didReceiveChallenge:completionHandler:" fooName
+
+# Break on exact ObjC Method
+b "-[MyUser name:]"
+
+# Breakpoint on completionHandler
+b -[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:]
+
+#  Regex Breakpoint
+rb '\-\[UIViewController\ '
+rb '\-\[YDUser(\(\w+\))?\ '
+breakpoint set --func-regex=. --shlib=objc_play
+
+#  Python script when Breakpoint fires
 (lldb) breakpoint command add -s python fooName
 Enter your Python command(s). Type 'DONE' to end.
     print("[!]found it")
     DONE
-```
-##### Callback to Python function when Breakpoint hits
-```
+
+# Callback to Python function when Breakpoint hits
 (lldb) breakpoint command add -F ydscripts.YDHelloWorld fooName
-```
-#####  Add & continue Python script when Breakpoint fires
-```
+
+# Add & continue Python script when Breakpoint fires
 (lldb) breakpoint command add -s python fooName
     print lldb.frame.register["rsi"].value
     lldb.frame.register["rsi"].value = "1"
@@ -223,9 +277,8 @@ Enter your Python command(s). Type 'DONE' to end.
     process = thread.GetProcess()
     process.Continue()
     DONE
-```
-#####  Breakpoint all code inside a function
-```
+
+#  Breakpoint all code inside a function
 (lldb) script
 >>> for a in range(0x1000016bc, 0x1000016d1):
 ... 	lldb.target.BreakpointCreateByAddress(a)
@@ -822,11 +875,13 @@ float
 ```
 
 ### Cast
-In a stripped binary - you can get a value from a register - as you will know the register position from documentation.  But you won't have a variable symbol name and will probably need to help lldb with the Type.  For example:
-```
-// same information in `input` and `arg1`
 
-// debug build
+In a stripped binary - you can get a value from a register - as you will know the register position from documentation.  But you won't have a variable symbol name and will probably need to help lldb with the Type.  For example:
+
+```bash
+# same information in `input` and `arg1`
+
+# debug build
 (lldb) fr v -L
 0x00007ffeefbff4c8: (int *) input = 0x00007ffeefbff4f0
 
@@ -837,10 +892,11 @@ In a stripped binary - you can get a value from a register - as you will know th
 >>> ptr = lldb.frame.FindVariable('input')
 >>> print(ptr.GetType())
 int *
+```
 
-```
 What happens if I don't have debug symbols ?  
-```
+
+```bash
 >>> ptr = lldb.frame.FindRegister("arg1")
 >>> print(ptr.GetType())
 unsigned long
@@ -848,8 +904,10 @@ unsigned long
 >>> ptr.GetNumChildren()
 1
 ```
-Were you expecting it to have 4 children?  Lldb doesn't even know it is a pointer to a single integer or array of integers.  At this point you are stuck, unless you help lldb.
+
+Were you expecting it to have 4 children?  **lldb doesn't even know it is a pointer to a single integer or array of integers**.  At this point you are stuck, unless you help lldb.
 ```
+
 >>> options = lldb.SBExpressionOptions()
 
 // help lldb by casting to int *
@@ -860,9 +918,11 @@ Were you expecting it to have 4 children?  Lldb doesn't even know it is a pointe
 int *
 ```
 
-### Stripped Binary, decayed pointers and writing to memory
+### Stripped Binary, decayed pointers and memory writes
+
 ##### Source code
-```
+
+```c
 void foo_void (int *input)
 {
     printf("Pointer: %p.\n", input);
@@ -881,9 +941,10 @@ int main (void) {
     return 0;
 }
 ```
+
 When the breakpoint fires - I want to modify `tiny_array[3]`.  First, I will cast the register value to the type you expect:
 
-```
+```bash
 >>> options = lldb.SBExpressionOptions()
 >>> ptr = lldb.frame.EvaluateExpression("(int *) $arg1", options)
 >>> print(ptr)
@@ -927,8 +988,9 @@ int
 ```
 
 ### Find, read and amend variable inside Parent Frame
+
 ##### Source code
-```
+```c
 void foo_void ( float *input )
 {
     printf("Pointer: %p.\n", input);      <-- Breakpoint here
@@ -944,8 +1006,10 @@ int main ( void ) {
     return 0;
 }
 ```
+
 ##### Solution
-```
+
+```bash
 >>> print(lldb.frame.GetFunctionName())
 foo_void
 
@@ -1700,6 +1764,95 @@ int main(void) {
     return 0;
 }
 
+```
+
+### lldb on Jailbroken iOS device
+
+```bash
+# macOS - install iProxy
+brew install usbmuxd
+
+# for lldb over USB access
+iproxy 6666 6666 &
+
+# For SSH over USB access
+iproxy 2222 22 &
+
+# SSH onto jailbroken device
+ssh -p 2222 root@localhost
+
+# get process ID
+ps -ax | grep -i my_app
+
+# invoke lldb
+debugserver localhost:6666 -a my_app
+
+# Hijack the app, before it starts
+
+debugserver localhost:6666 --waitfor my_app
+
+# start lldb from Terminal on macOS
+$ lldb
+(lldb) process connect connect://localhost:6666
+(lldb) thread list
+```
+
+##### Checkra1n Jailbreak
+
+>An SSH server is deployed on port 44 on localhost only.
+
+```bash
+iproxy 4444 44 &
+ssh -p 4444 root@localhost
+```
+
+Although SSH is installed by default, you need `scp` for file copying. I installed `openSSH` via `Cydia`.
+
+
+##### Electra Jailbreak
+
+Electra shipped with `debugserver`. Previous jailbreaks had lots of manual steps to get the correct `debugserver` onto the device.
+![electra](images/2019/06/IMG_0069.png)
+
+##### Electra app will not open
+
+If you have a full Apple iOS developer license, you can code-sign `ad-hoc` apps to last one year. If the `Electra app` won't open, you can re-code sign the `ipa file`.  One way to achieve this:
+
+- Open `Cydia Impactor`
+- Select `\Device\InstallPackage`
+- Find the `Electra.ipa` file
+- When prompted by `Cydia Impactor` enter your Apple ID.
+- Do **NOT** enter your password.  Go to <https://appleid.apple.com/> and generate a `APP-SPECIFIC PASSWORD`
+
+Now `Electra` will work for another year.
+
+##### Electra specifics
+
+When you select `Tweaks`, Electra runs the `debug-server` from a different path:
+
+```bash
+# Tweaks enabled
+/Developer/usr/bin/debugserver localhost:6666 -a 794
+
+# Tweaks disabled
+/usr/bin/debugserver localhost:6666 -a 794
+```
+
+##### Terminted due to Code Signing Error
+
+You need to change the `entitlements` inside the app bundle.  Specifically: `<key>get-task-allow</key>`:
+
+```xml
+security cms -D -i embedded.mobileprovision | grep -i -A 1 "get"
+<key>get-task-allow</key>
+	<true/>
+```
+
+##### References
+
+```
+https://github.com/dmayer/idb/wiki/How-to:-ssh-via-usb
+https://kov4l3nko.github.io/blog/2018-05-25-my-experience-with-lldb-and-electra-jb/
 ```
 
 ### lldb bypass iOS Jailbreak detections
