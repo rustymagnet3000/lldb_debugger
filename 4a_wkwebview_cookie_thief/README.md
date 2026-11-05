@@ -1,11 +1,13 @@
 # 🍪 WKWebView Cookie Thief 🍪
+
 Use a debugger (`lldb`) to print all cookies inside a WKWebView cookie store.
 
-![success](/4a_wkwebview_cookie_thief/b_cookie_thief.png)
+![success](b_cookie_thief.png)
 
-##### Summary
-```
-// Visit page with Cookies
+## Summary
+
+```lldb
+# Visit page with Cookies
 (lldb) process interrupt
 
 (lldb) settings set target.language objc
@@ -20,9 +22,12 @@ Use a debugger (`lldb`) to print all cookies inside a WKWebView cookie store.
 
 (lldb) po (void)[$cookies getAllCookies:^(NSArray * _Nonnull cookies) {NSLog(@"[*]Cookies inside of WKHTTPCookieStore: %@",cookies);}];
 ```
+
 ## A Swift Cookie Thief
+
 The debugger (`lldb`) could mimic the following code:
-```
+
+```swift
 webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
             for cookie in cookies {
                 print("\(cookie.name) is set to \(cookie.value)")
@@ -31,7 +36,8 @@ webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies i
 ```
 
 Find the `WKHTTPCookieStore` object on the `Heap`.
-```
+
+```lldb
 (lldb) settings set target.language swift
 (lldb) exp import WebKit
 (lldb) search WKHTTPCookieStore
@@ -41,35 +47,40 @@ Find the `WKHTTPCookieStore` object on the `Heap`.
 
 (lldb) exp $a.getAllCookies{cookies in NSLog("🍪🍪 Cookie Thief 🍪🍪"); for cookie in cookies { NSLog("🍪 %@", cookie) }}
 ```
-#### The results
-```
+
+### The results
+
+```text
 [<NSHTTPCookie
-	version:1
-	name:s_fid
-	value:0B1EE86304D66ECC-1F86181ADC4A3A3B
-	expiresDate:'2023-11-21 10:26:50 +0000'
-	created:'2018-11-21 10:26:50 +0000'
-	sessionOnly:FALSE
-	domain:.apple.com
-	partition:none
-	sameSite:none
-	path:/
-	isSecure:FALSE
+    version:1
+    name:s_fid
+    value:0B1EE86304D66ECC-1F86181ADC4A3A3B
+    expiresDate:'2023-11-21 10:26:50 +0000'
+    created:'2018-11-21 10:26:50 +0000'
+    sessionOnly:FALSE
+    domain:.apple.com
+    partition:none
+    sameSite:none
+    path:/
+    isSecure:FALSE
  path:"/" isSecure:FALSE>
  ...
  ..
  ..
 ```
-#### Warning
-This works on a physical iOS device.  But you don't see anything?  
+
+### Warning
+
+This works on a physical iOS device.  But you don't see anything?
 
 - [x] Odd behaviour with simulators.
 - [x] If you are using a Release / App Store app, `Get-TaskAllow=false` will stop lldb.
 - [x] `NSlog` and `printf` only appear to print to lldb output when you are connected in a debug build.
 - [x] I had to type `(lldb) continue` before the logs were sent.
 
-#### Practice with Expression
-```
+### Practice with Expression
+
+```lldb
 (lldb) expr let $a = unsafeBitCast(0x2803db2c0, to: WKHTTPCookieStore.self)
 
 (lldb) expression
@@ -81,17 +92,22 @@ Enter expressions, then terminate with an empty line to evaluate:
 (lldb) exp $printSomething(a: $p)
 <WKHTTPCookieStore: 0x2803db2c0>
 ```
+
 ## An Objective-C Cookie Thief
+
 Using an Objective-C `Block` was even nicer.
-```
-search WKHTTPCookieStore
-expression id $a = (id)0x283e9b020
+
+```lldb
+(lldb) search WKHTTPCookieStore
+(lldb) expression id $a = (id)0x283e9b020
 
 (lldb) po [$a description]
 <WKHTTPCookieStore: 0x1d40db4a0>
 ```
-##### Create the Block
-```
+
+### Create the Block
+
+```lldb
 (lldb) expression
 Enter expressions, then terminate with an empty line to evaluate:
   1: void(^$cookieThief)(NSArray<NSHTTPCookie *> * _Nonnull) = ^(NSArray<NSHTTPCookie *> * _Nonnull cookies){
@@ -100,16 +116,17 @@ Enter expressions, then terminate with an empty line to evaluate:
   4: NSLog(@"\t%@",cookies[i]);
   5: };
 ```
-##### Invoke the Block
-```
-exp (void)[$a getAllCookies:$cookieThief]
+
+### Invoke the Block
+
+```lldb
+(lldb) exp (void)[$a getAllCookies:$cookieThief]
 (lldb) continue         // to watch the output in Console.app
 ```
-##### References
-https://www.codeproject.com/Articles/1181358/Debugging-with-Xcode
 
-https://www.mikeash.com/pyblog/friday-qa-2014-08-29-swift-memory-dumping.html
+## References
 
-https://stackoverflow.com/questions/29441418/lldb-swift-casting-raw-address-into-usable-type
-
-https://github.com/chenyongMAC/learn-infos/blob/56490a7951f2b82a665716abcae30a92fcab656c/hybrid/WKWebView-iOS11.md
+- <https://www.codeproject.com/Articles/1181358/Debugging-with-Xcode>
+- <https://www.mikeash.com/pyblog/friday-qa-2014-08-29-swift-memory-dumping.html>
+- <https://stackoverflow.com/questions/29441418/lldb-swift-casting-raw-address-into-usable-type>
+- <https://github.com/chenyongMAC/learn-infos/blob/56490a7951f2b82a665716abcae30a92fcab656c/hybrid/WKWebView-iOS11.md>
