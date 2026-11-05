@@ -1,8 +1,8 @@
-## Using Python to write LLDB scripts
+# Using Python to write LLDB scripts
 
-### Basics
+## Basics
 
-```bash
+```lldb
 (lldb) script print(lldb.target)
 SampleApp-Swift
 
@@ -12,14 +12,16 @@ thread #1: tid = 0x67f3e, 0x0000000108005244 SampleApp-Swift`main at AppDelegate
 (lldb) script print(lldb.process)
 SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swift
 
-(lldb) print(lldb.frame.registers)
+(lldb) script print(lldb.frame.registers)
 
 (lldb) script lldb.debugger.HandleCommand("frame info")
 ```
-### SBValue
-```
+
+## SBValue
+
+```python
 >>> reg = lldb.frame.FindRegister('arg1')
-// reg is an SBValue
+# reg is an SBValue
 
 >>> print(reg)
 (unsigned long) rdx = 0x00007ffeefbff598
@@ -44,10 +46,11 @@ SBProcess: pid = 16218, state = stopped, threads = 1, executable = SampleApp-Swi
 ... another long description of Blocks of code.
 ```
 
-### SBValue (get string vlaue)
+## SBValue (get string value)
 
-```bash
-(lldb) breakpoint set -b "-[NSURL(NSURL) initWithString:]"                                                                                         Breakpoint 9: where = Foundation`-[NSURL(NSURL) initWithString:], address = 0x0000000182726484
+```python
+(lldb) breakpoint set -b "-[NSURL(NSURL) initWithString:]"
+Breakpoint 9: where = Foundation`-[NSURL(NSURL) initWithString:], address = 0x0000000182726484
 
 Target 0: (debugger_challenge) stopped.
 
@@ -56,7 +59,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
 
 >>> frame = lldb.frame
 >>> print(frame)
-frame #0: 0x0000000182726484 Foundation` -[NSURL(NSURL) initWithString:] 
+frame #0: 0x0000000182726484 Foundation` -[NSURL(NSURL) initWithString:]
 
 >>> print(frame.GetFunctionName())
 -[NSURL(NSURL) initWithString:]
@@ -85,9 +88,9 @@ https://www.httpbin.org/get
 https://www.httpbin.org/get
 ```
 
-### Print the correct thing
+## Print the correct thing
 
-```bash
+```python
 >>> print(lldb.SBFrame)
 <class 'lldb.SBFrame'>
 
@@ -97,8 +100,10 @@ https://www.httpbin.org/get
 >>> print(lldb.frame)
 frame #0: 0x00000001000013df objc_play`main at main.m:26:42
 ```
-### Help
-```
+
+## Help
+
+```lldb
 (lldb) script help(lldb.process)
 
 (lldb) script help(lldb.frame)
@@ -106,10 +111,11 @@ frame #0: 0x00000001000013df objc_play`main at main.m:26:42
 (lldb) script help(lldb.SBDebugger)
 
 >>> help(lldb.debugger.GetSelectedTarget)
+```
 
-```
-### Script interface
-```
+## Script interface
+
+```python
 (lldb) script
 >>> 2+3
 5
@@ -122,11 +128,11 @@ Swift-4.1
 SampleApp-Swift
 ```
 
-### Well placed Breakpoint
-```
+## Well placed Breakpoint
+
+```python
 >>> print lldb.frame.GetFunctionName()
 tinyDormant.YDJediVC.viewDidLoad() -> ()
-
 
 >>> print lldb.frame.get_all_variables()
 
@@ -140,15 +146,14 @@ tinyDormant.YDJediVC.viewDidLoad() -> ()
   secret_string = "foobar"
   secret_nsstring = 0xfe1420463360b96a "ewok"
 }
-
 ```
 
-### Instantiate and read ObjC Class
-```
+## Instantiate and read ObjC Class
+
+```python
 >>> options.SetLanguage(lldb.eLanguageTypeObjC)
 
-
-// you don't need print, but you won't get usable feedback if you don't use it
+# you don't need print, but you won't get usable feedback if you don't use it
 >>> print lldb.frame.EvaluateExpression('[MispelledByDesign new]')
  = <could not resolve type>
 
@@ -160,8 +165,10 @@ tinyDormant.YDJediVC.viewDidLoad() -> ()
 >>> print a.description
 <UIViewController: 0x7fab33c12140>
 ```
-### Instantiate and read a Swift Class
-```
+
+## Instantiate and read a Swift Class
+
+```python
 (lldb) script
 >>> options = lldb.SBExpressionOptions()
 >>> options.SetLanguage(lldb.eLanguageTypeSwift)
@@ -197,20 +204,19 @@ lastName = "Jackel"
 '42'
 ```
 
-### Troubleshooting
+## Troubleshooting
+
 If you hit `unable to execute script function` make sure your `madman.py` filename matches the name in this code:
-```
+
+```python
 debugger.HandleCommand('command script add -f madman.GetBundleIdentifier yd_bundle_id')
 ```
-### References
-https://lldb.llvm.org/use/python-reference.html
 
-https://github.com/theocalmes/lldbpy
+## References
 
-http://ryanipete.com/blog/lldb/python/how_to_create_a_custom_lldb_command_pt_1/
-
-https://lldb.llvm.org/use/python.html
-
-https://aijaz.net/2017/01/11/lldb-python/index.html
-
-https://hub.packtpub.com/lldb-and-command-line/
+- <https://lldb.llvm.org/use/python-reference.html>
+- <https://github.com/theocalmes/lldbpy>
+- <http://ryanipete.com/blog/lldb/python/how_to_create_a_custom_lldb_command_pt_1/>
+- <https://lldb.llvm.org/use/python.html>
+- <https://aijaz.net/2017/01/11/lldb-python/index.html>
+- <https://hub.packtpub.com/lldb-and-command-line/>

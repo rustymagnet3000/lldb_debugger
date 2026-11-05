@@ -1,5 +1,6 @@
 # The LLDB Debugger
-<!-- TOC depthfrom:3 depthto:3 withlinks:true updateonsave:true orderedlist:false -->
+
+<!-- TOC depthfrom:2 depthto:2 withlinks:true updateonsave:true orderedlist:false -->
 
 - [Quickstart](#quickstart)
 - [Attach](#attach)
@@ -35,17 +36,17 @@
 - [lldb on Jailbroken iOS device](#lldb-on-jailbroken-ios-device)
 - [lldb bypass iOS Jailbreak detections](#lldb-bypass-ios-jailbreak-detections)
 - [lldb inspect third party SDK](#lldb-inspect-third-party-sdk)
-- [lldb lifting code  iOS app](#lldb-lifting-code--ios-app)
+- [lldb lifting code (iOS app)](#lldb-lifting-code-ios-app)
 - [lldb references](#lldb-references)
 
 <!-- /TOC -->
 
-### Quickstart
+## Quickstart
 
-It is hard to do things quickly in `lldb` unless you have set up an `lldbinit` file.
+It is hard to do things quickly in `lldb` unless you have set up an `~/.lldbinit` file:
 
-```bash
-cat ~/.lldbinit 
+```lldb
+# ~/.lldbinit
 # Great scripts from https://github.com/DerekSelander/LLDB
 command script import ~/LLDB/lldb_commands/dslldb.py
 # Facebook's chisel
@@ -64,9 +65,9 @@ command alias yd_stack_vars frame variable --no-args
 command alias yd_connect process connect connect://localhost:6666
 ```
 
-### Attach
+## Attach
 
-```bash
+```lldb
 # Load debugger
 lldb
 
@@ -84,9 +85,9 @@ lldb --wait-for patched.bin
 lldb -n open_app
 ```
 
-### Finding variables
+## Finding variables
 
-```bash
+```lldb
 # Frame
 frame info
 
@@ -103,9 +104,9 @@ bt
 frame select 1
 ```
 
-### Getting started
+## Getting started
 
-```bash
+```lldb
 # Threads
 thread list
 
@@ -140,9 +141,9 @@ image lookup -a 0x1000016a0
 search -r 0x0000000100610570
 ```
 
-### Disassemble
+## Disassemble
 
-```bash
+```lldb
 # By address
 disas -s 0x00001620
 
@@ -153,23 +154,23 @@ disas -n Foo.Bar
 disas -n "+[YDFileChecker asmSyscallFunction:]"
 ```
 
-### Registers
+## Registers
 
-Argument  | Register | x86_64  | arm64
---|---|--|--
-Return  | -  | RAX | -
-First  | arg1 | RDI | x0
-Second  | arg2 | RSI | x1
-Third  |  arg3| RDX |  x2
-Fourth  | arg4 | RCX  | x3
-Fifth  | arg5 | R8  | x4
-Sixth  | arg6 |  R9 | x5
-Syscalls  | - | syscall  | x16
+| Argument | Register | x86_64  | arm64 |
+| -------- | -------- | ------- | ----- |
+| Return   | -        | RAX     | -     |
+| First    | arg1     | RDI     | x0    |
+| Second   | arg2     | RSI     | x1    |
+| Third    | arg3     | RDX     | x2    |
+| Fourth   | arg4     | RCX     | x3    |
+| Fifth    | arg5     | R8      | x4    |
+| Sixth    | arg6     | R9      | x5    |
+| Syscalls | -        | syscall | x16   |
 
-### Print and Expression
+## Print and Expression
 
-```bash
-# Print a register with useful aliase
+```lldb
+# Print a register with a useful alias
 po $arg2
 
 # Hex to Decimal
@@ -188,13 +189,13 @@ exp NSString *$myMethod = NSStringFromSelector(_cmd)
 po NSSelectorFromString($meth)
 ```
 
-### Breakpoints
+## Breakpoints
 
-```bash
+```lldb
 # Getting the options
 help breakpoint set
 
-#  Options to add script to Breakpoint
+# Options to add script to Breakpoint
 help break command add
 
 # Delete all breakpoints
@@ -254,12 +255,12 @@ b "-[MyUser name:]"
 # Breakpoint on completionHandler
 b -[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:]
 
-#  Regex Breakpoint
+# Regex Breakpoint
 rb '\-\[UIViewController\ '
 rb '\-\[YDUser(\(\w+\))?\ '
 breakpoint set --func-regex=. --shlib=objc_play
 
-#  Python script when Breakpoint fires
+# Python script when Breakpoint fires
 (lldb) breakpoint command add -s python fooName
 Enter your Python command(s). Type 'DONE' to end.
     print("[!]found it")
@@ -278,34 +279,37 @@ Enter your Python command(s). Type 'DONE' to end.
     process.Continue()
     DONE
 
-#  Breakpoint all code inside a function
+# Breakpoint all code inside a function
 (lldb) script
 >>> for a in range(0x1000016bc, 0x1000016d1):
-... 	lldb.target.BreakpointCreateByAddress(a)
+...     lldb.target.BreakpointCreateByAddress(a)
 ```
 
-### Memory
+## Memory
 
-##### Read the string that is pointed to by a char* pointer
-`memory read 0x00007fff36d99fb5`
-##### Read five instructions after address
-`memory read --format instruction --count 5 0x10463d970`
-##### Read memory and print in format Decimal
-`mem read 0x00007ffee5f99610 -f d`
-##### Get start and end of search
-```
+```lldb
+# Read the string that is pointed to by a char* pointer
+memory read 0x00007fff36d99fb5
+
+# Read five instructions after address
+memory read --format instruction --count 5 0x10463d970
+
+# Read memory and print in format Decimal
+mem read 0x00007ffee5f99610 -f d
+
+# Get start and end of search
 (lldb) section
 [0x0000010462c000-0x00000107744000] 0x0003118000 MyApp`__TEXT
 [0x00000107744000-0x00000107d48000] 0x0000604000 MyApp`__DATA
-/* removed sections for brevity */
-```
-##### Find String in memory range
-`mem find -s "youtube" -- 0x00000107744000 0x00000107d48000`
-##### Read 100 bytes from address
-`memory read -c100 0x10793362c`
+# removed sections for brevity
 
-##### Find every "B" character. Stop after 5 matches.
-```
+# Find String in memory range
+mem find -s "youtube" -- 0x00000107744000 0x00000107d48000
+
+# Read 100 bytes from address
+memory read -c100 0x10793362c
+
+# Find every "B" character. Stop after 5 matches.
 (lldb) mem find -s "B" -c 5 -- 0x00000100000000 0x00000100004000
 data found at location: 0x10000063b
 0x10000063b: 42 2e 64 79 6c 69 62 00 00 00 00 00 00 26 00 00  B.dylib......&..
@@ -314,53 +318,75 @@ data found at location: 0x100003f60
 0x100003f70: 6f 00 00 00 6e 00 00 00 00 00 00 00 0a 5b 2a 5d  o...n........[*]
 no more matches within the range.
 ```
-### Scripting
-```
-//See how many times a C function is called when running an iOS app.
 
+## Scripting
+
+See how many times a C function is called when running an iOS app:
+
+```lldb
 breakpoint set -n getenv
 breakpoint modify --auto-continue 1
 breakpoint command add 1
-  po (char *)$arg1								// telling lldb how to cast $arg1
+  po (char *)$arg1                              // telling lldb how to cast $arg1
   DONE
 continue
 ```
 
+## Watchpoint
 
-### Watchpoint
-##### Help
-`help watchpoint set`
-##### watchpoint list
-`watchpoint list`
-##### watchpoint delete
-`watch del 1`
-##### watchpoint on Global variable
-`watchpoint set variable file_exists`
-##### Once it stops
-`po file_exists = NO`
-##### watchpoint on frame variable
-`watchpoint set variable completionHandler`
-##### watchpoint on address in function
-`watchpoint set expression -w write -- "+[YDFileChecker checkFileExists]" + 32`
-##### watchpoint on register
-`watchpoint set expression -- $arg1`
-##### watchpoint on register
-`watchpoint set expression -w read_write -- $arg1`
-##### Delete some watchpoints, if you see this error
-`error: sending gdb watchpoint packet failed`
+```lldb
+# Help
+help watchpoint set
 
-### Settings
-##### show target.run-args
-`settings show target.run-args`
-##### show target.env-vars
-`settings show target.env-vars`
-##### Add setting to lldbinit file
-`echo "settings set target.x86-disassembly-flavor intel" >> ~/.lldbinit`
-##### Logging
-`settings set target.process.extra-startup-command QSetLogging:bitmask=LOG_ALL;`
+# Watchpoint list
+watchpoint list
 
-### lldb with Swift
+# Watchpoint delete
+watch del 1
+
+# Watchpoint on Global variable
+watchpoint set variable file_exists
+
+# Once it stops
+po file_exists = NO
+
+# Watchpoint on frame variable
+watchpoint set variable completionHandler
+
+# Watchpoint on address in function
+watchpoint set expression -w write -- "+[YDFileChecker checkFileExists]" + 32
+
+# Watchpoint on register
+watchpoint set expression -- $arg1
+
+# Watchpoint on register, read and write
+watchpoint set expression -w read_write -- $arg1
 ```
+
+If you see `error: sending gdb watchpoint packet failed`, delete some watchpoints.
+
+## Settings
+
+```lldb
+# Show target.run-args
+settings show target.run-args
+
+# Show target.env-vars
+settings show target.env-vars
+
+# Logging
+settings set target.process.extra-startup-command QSetLogging:bitmask=LOG_ALL;
+```
+
+Add a setting to your `~/.lldbinit` file from Terminal:
+
+```bash
+echo "settings set target.x86-disassembly-flavor intel" >> ~/.lldbinit
+```
+
+## lldb with Swift
+
+```swift
 class lyftClass {
 
     static let request_number = 1
@@ -377,9 +403,11 @@ class lyftClass {
 }
 ```
 
-##### Invoking code from a Framework or the main application ?
-If you are invoking code from a Swift dynamic framework, make sure to tell lldb about the Framework.  Below is why...
-```
+### Invoking code from a Framework or the main application?
+
+If you are invoking code from a Swift dynamic framework, make sure to tell lldb about the Framework.  Below is why:
+
+```lldb
 (lldb) exp let $a = RustyAppInfo()
 error: <EXPR>:3:10: error: use of unresolved identifier 'RustyAppInfo'
 let $a = RustyAppInfo()
@@ -387,40 +415,64 @@ let $a = RustyAppInfo()
 
 (lldb) expr -- import rusty_nails
 (lldb) exp let $a = RustyAppInfo()
-// success. now you have a class instant.
+# success. now you have a class instance.
 ```
-lldb knew I was trying to write swift code. In an iOS app, where you have Swift and Objective-C code, I always find it useful to type:
 
-`(lldb) settings set target.language swift`
-##### Connect to app via lldb
-I liked to put a breakpoint on the the AppDelegate class.  If you let the app load, the context of Swift is automagically lost by lldb.
-##### Print your class
+lldb knew I was trying to write Swift code. In an iOS app, where you have Swift and Objective-C code, I always find it useful to type:
+
+```lldb
+(lldb) settings set target.language swift
 ```
+
+### Connect to app via lldb
+
+I liked to put a breakpoint on the AppDelegate class.  If you let the app load, the context of Swift is automagically lost by lldb.
+
+### Print your class
+
+```lldb
 (lldb) po lyftClass()
 <lyftClass: 0x60c000051dc0>
 ```
-##### Create a class instance
-`expression let $lyft = rusty.lyftClass()`
-##### Invoke a member function from instance class
-`po $lyft.app_version()`       
-##### Try and print a Class member
+
+### Create a class instance
+
+```lldb
+(lldb) expression let $lyft = rusty.lyftClass()
 ```
-po $lyft.request_number
+
+### Invoke a member function from instance class
+
+```lldb
+(lldb) po $lyft.app_version()
+```
+
+### Try and print a Class member
+
+```lldb
+(lldb) po $lyft.request_number
 error: <EXPR>:3:1: error: static member 'uri' cannot be used on instance of type 'lyftClass'
 ```
+
 This fails as it is a Static class member and not accessible to the instantiated class.
-##### Print a Class member
-```
+
+### Print a Class member
+
+```lldb
 (lldb) po lyftClass.uri
 "https://my.url/"
 ```
-##### Print Class function member
-```
+
+### Print Class function member
+
+```lldb
 (lldb) po lyftClass.google()
 42
 ```
-##### Invoke Swift Class with Initializers
-```
+
+### Invoke Swift Class with Initializers
+
+```swift
 class lyftClass {
 
     static let url = "https://my.url/"
@@ -446,16 +498,20 @@ class lyftClass {
     }
 }
 ```
-##### Create a class instance
-```
+
+### Create a class instance
+
+```lldb
 (lldb) expression let $a = lyftClass()
 error: <EXPR>:3:10: error: cannot invoke initializer for type 'lyftClass' with no arguments
 
 <EXPR>:3:10: note: overloads for 'lyftClass' exist with these partially matching parameter lists: (mickey: String, mouse: Int), (mickey: String)
 let $a = lyftClass()
 ```
-##### Invoke a function from instant class
-```
+
+### Invoke a function from instance class
+
+```lldb
 (lldb) expression let $b = lyftClass(mickey: "zer", mouse: 500)
 (lldb) po $b
 <lyftClass: 0x60c000284470>
@@ -464,10 +520,12 @@ let $a = lyftClass()
 "zer"
 
 (lldb) po $b.mouse
-500   
+500
 ```
-##### Create Class with convenience initializer
-```
+
+### Create Class with convenience initializer
+
+```lldb
 (lldb) expression let $a = lyftClass(mickey: "wow")
 (lldb) po $a
 <lyftClass: 0x60000009b580>
@@ -477,11 +535,11 @@ let $a = lyftClass()
 100
 ```
 
+## lldb with Objective C
 
+### Classes
 
-### lldb with Objective C
-##### Classes
-```
+```objc
 @import Foundation;
 
 @interface Box:NSObject {
@@ -528,52 +586,71 @@ int main(int argc, const char * argv[]) {
 }
 ```
 
-##### Create a new Class Instance
-```
+### Create a new Class Instance
+
+```lldb
 (lldb) exp Box *$b = [Box new];
+```
 
 I could have easily written:
-(lldb) exp Box *$a = [[Box alloc]init];
 
+```lldb
+(lldb) exp Box *$a = [[Box alloc]init];
 ```
-##### Print an initialised Class variable
-```
+
+### Print an initialised Class variable
+
+```lldb
 (lldb) po $a->length
 1
 ```
-##### Print the Class pointer
-```
+
+### Print the Class pointer
+
+```lldb
 (lldb) po $b
 <Box: 0x100777d50>
 
 (lldb) po (Box*)$b
 <Box: 0x100777d50>
 ```
-##### Set a Class variable
-```
+
+### Set a Class variable
+
+```lldb
 (lldb) exp $b->height = 20.0
 (double) $8 = 20
 
 (lldb) po $b->height
 20
 ```
-##### Access Instance Method
-```
+
+### Access Instance Method
+
+```lldb
 (lldb) po $b.volume
 20
 ```
-#### Invoke Instance Method with several parameters
-```
-- (void)getVersion:(int*)num1 minor:(int*)num2 patch:(int*)num3;
 
+### Invoke Instance Method with several parameters
+
+Given this method:
+
+```objc
+- (void)getVersion:(int*)num1 minor:(int*)num2 patch:(int*)num3;
+```
+
+```lldb
 (lldb) e SampleClass *$sample = [[SampleClass alloc]init];
 (lldb) po $sample
 <SampleClass: 0x10040ae70>
 
 (lldb) exp [$sample getVersion:&a minor:&b patch:&c];
 ```
-#### NSString to NSData and back
-```
+
+### NSString to NSData and back
+
+```lldb
 (lldb) exp @import Foundation
 (lldb) exp NSString* $str = @"hello string";
 (lldb) po $str
@@ -588,8 +665,10 @@ hello string
 (lldb) po $newStr
 hello string
 ```
-#### Booleans
-```
+
+### Booleans
+
+```lldb
 (lldb) expression BOOL $myflag = YES
 (lldb) print $myflag
 (BOOL) $myflag = NO
@@ -598,29 +677,38 @@ hello string
 (lldb) print $myflag
 (BOOL) $myflag = YES
 ```
-### lldb with Objective-C Blocks
-##### Write Block
-```
---> remember, Blocks are on the Stacks. So if your debugger moves around and you created a Block it won't be available ( if you changed Frames / Stacks )
 
+## lldb with Objective-C Blocks
+
+### Write Block
+
+Remember, Blocks are on the Stack. So if your debugger moves around and you created a Block it won't be available (if you changed Frames / Stacks).
+
+```lldb
 (lldb) exp
 1 void (^$simpleBlock)(void) = ^{
 2 (void)NSLog(@"hello from a block!");
 3 };
 4
 ```
-##### Call Block
-```
+
+### Call Block
+
+```lldb
 (lldb) po $simpleBlock()
 [1136:66563] hello from a block!
 ```
-##### Get Pointer to Block
-```
+
+### Get Pointer to Block
+
+```lldb
 (lldb) po $simpleBlock        // get pointer to Block
 (void (^)()) $simpleBlock = 0x00000001025a9900
 ```
-##### While Loop inside a Block
-```
+
+### While Loop inside a Block
+
+```lldb
 (lldb) expression
 1 void (^$helloWhile)(int) =
 2 ^(int a) {
@@ -635,8 +723,10 @@ Hello 3
 Hello 4
 ......
 ```
-##### Add two numbers with a Block
-```
+
+### Add two numbers with a Block
+
+```lldb
 (lldb) expression
 1 int (^$add)(int, int) =
 2 ^(int a, int b) { return a+b; }
@@ -651,22 +741,27 @@ Hello 4
 (int (^)(int, int)) $add = 0x0000000101424110
 ```
 
-##### Void Block
-```
-po void (^$fakeBlock)(int, NSURLCredential * _Nullable) =^(int a, NSURLCredential *b) {NSLog(@"hello. Original enum was set to %d", a);}
+### Void Block
 
-po $fakeBlock(2,0)
+```lldb
+(lldb) po void (^$fakeBlock)(int, NSURLCredential * _Nullable) =^(int a, NSURLCredential *b) {NSLog(@"hello. Original enum was set to %d", a);}
+
+(lldb) po $fakeBlock(2,0)
 ```
-##### Use Global Dispatch Block
-```
+
+### Use Global Dispatch Block
+
+```lldb
 (lldb) expression
 1 dispatch_sync(dispatch_get_global_queue(0,0),
          ^(){ printf("Hello world\n"); });
 ```
-##### Calling the Block with a Name
-```
+
+### Calling the Block with a Name
+
 A more complicated example that gives the Block a name so it can be called like a function.
 
+```lldb
 (lldb) exp
 1 double (^$multiplyTwoValues)(double, double) =
 2 ^(double firstValue, double secondValue) {
@@ -677,7 +772,6 @@ A more complicated example that gives the Block a name so it can be called like 
 (lldb) po $multiplyTwoValues(2,4)
 8
 
-
 (lldb) exp double $result
 (lldb) p $result
 (double) $result = 0
@@ -687,8 +781,9 @@ A more complicated example that gives the Block a name so it can be called like 
 8
 ```
 
-##### Get the syntax
-```
+### Get the syntax
+
+```lldb
 (lldb) expression
 Enter expressions, then terminate with an empty line to evaluate:
 1 void(^$remover)(id, NSUInteger, BOOL *) = ^(id string, NSUInteger i,BOOL *stop){
@@ -707,18 +802,23 @@ ID: 2 String: whoop whoop
 3 String: doctor pants
 ```
 
-### lldb with C code
-##### malloc / strcpy
+## lldb with C code
+
+### malloc / strcpy
+
 Create a malloc char array, copy with strcpy, and free.
-```
+
+```lldb
 (lldb) e char *$str = (char *)malloc(8)
 (lldb) e (void)strcpy($str, "munkeys")
 (lldb) e $str[1] = 'o'
 (lldb) p $str
 (char *) $str = 0x00000001c0010460 "monkeys"
 ```
-##### Warm-up - getenv
-```
+
+### Warm-up - getenv
+
+```lldb
 (lldb) e const char *$home = NULL
 (lldb) p *$home
 error: Couldn't apply expression side effects : Couldn't dematerialize a result variable: couldn't read its memory
@@ -729,19 +829,25 @@ error: Couldn't apply expression side effects : Couldn't dematerialize a result 
 (lldb) p $home
 (const char *) $home = 0x00007ffeefbff8d2 "/Users/foobar"
 ```
-##### Examine
-```
+
+### Examine
+
+```lldb
 (lldb) malloc_info --type 0x1c0010480
 [+][+][+][+] The string is in the heap!  [+][+][+][+]
 
 (lldb) memory read 0x00000001c0010460
 ```
-##### Free
-```
+
+### Free
+
+```lldb
 (lldb) e (void)free($str)
 ```
-##### Print Bool
-```
+
+### Print Bool
+
+```lldb
 (lldb) po (bool) result
 <object returned empty description>
 
@@ -766,8 +872,10 @@ error: Couldn't apply expression side effects : Couldn't dematerialize a result 
 (lldb) p/t result
 (bool) $6 = 0b00000001
 ```
-##### Print Char Array
-```
+
+### Print Char Array
+
+```lldb
 (lldb) po (char*) message
 "AAAA"
 
@@ -780,8 +888,10 @@ error: Couldn't apply expression side effects : Couldn't dematerialize a result 
 (lldb) p *message
 (char) $1 = 'A'
 ```
-##### Struct initialize
-```
+
+### Struct initialize
+
+```lldb
 (lldb) expr struct YD_MENU_ITEMS $menu = {.menu_option = "a", .description = "all items"};
 
 (lldb) expr struct VERSION_INFO $b
@@ -791,8 +901,10 @@ error: typedef 'VERSION_INFO' cannot be referenced with a struct specifier
 (lldb) p $b
 (VERSION_INFO) $b = (Major = 0, Minor = 0, Build = 0)
 ```
-##### Enum initialize
-```
+
+### Enum initialize
+
+```lldb
 (lldb) expr PAS_RESULT $a
 (lldb) po $a
 <nil>
@@ -801,26 +913,34 @@ error: typedef 'VERSION_INFO' cannot be referenced with a struct specifier
 (lldb) exp $a = 2
 (PAS_RESULT) $0 = 2
 ```
-##### Cast return types
+
+### Cast return types
+
 The flexibility of `void *` is great.  If you don't know how to cast the return handle you can point it to `void`.
-```
+
+```lldb
 (lldb) exp (void*) getCurrentVersion(&$b);
 (void *) $2 = 0x0000000000000000
 (lldb) p $b
 (VERSION_INFO) $b = (Major = 4, Minor = 6, Build = 13)
 ```
 
-##### Banana Skins
+### Banana Skins
+
 Make sure you add the `$` sign before a variable. Else you will hit:
 
-`error: warning: got name from symbols: b`
-
-### Read Pointer Array
-##### Source code
+```text
+error: warning: got name from symbols: b
 ```
+
+## Read Pointer Array
+
+### Source code
+
+```c
 void foo_void ( float *input )
 {
-    printf("Pointer: %p.\n", input);        <-- breakpoint here
+    printf("Pointer: %p.\n", input);        // <-- breakpoint here
 }
 
 int main ( void ) {
@@ -833,8 +953,10 @@ int main ( void ) {
     return 0;
 }
 ```
-##### Solution
-```
+
+### Solution
+
+```python
 (lldb) fr v -L
 0x00007ffeefbff4c8: (float *) input = 0x00007ffeefbff4f0
 
@@ -843,7 +965,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()'.
 
 >>> ptr = lldb.frame.FindVariable('input')
 
->>> print(ptr.GetValue())       // this prints the value NOT the offset
+>>> print(ptr.GetValue())       # this prints the value NOT the offset
 0x00007ffeefbff4f0
 
 >>> print(ptr.GetType())
@@ -862,7 +984,6 @@ float
 >>> print(ptr_size_type)
 4
 
-
 >>> for i in range (0, 4):
 ...     offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
 ...     val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
@@ -874,11 +995,11 @@ float
 (140732920755452, '4')
 ```
 
-### Cast
+## Cast
 
 In a stripped binary - you can get a value from a register - as you will know the register position from documentation.  But you won't have a variable symbol name and will probably need to help lldb with the Type.  For example:
 
-```bash
+```lldb
 # same information in `input` and `arg1`
 
 # debug build
@@ -894,9 +1015,9 @@ In a stripped binary - you can get a value from a register - as you will know th
 int *
 ```
 
-What happens if I don't have debug symbols ?  
+What happens if I don't have debug symbols?
 
-```bash
+```python
 >>> ptr = lldb.frame.FindRegister("arg1")
 >>> print(ptr.GetType())
 unsigned long
@@ -906,11 +1027,11 @@ unsigned long
 ```
 
 Were you expecting it to have 4 children?  **lldb doesn't even know it is a pointer to a single integer or array of integers**.  At this point you are stuck, unless you help lldb.
-```
 
+```python
 >>> options = lldb.SBExpressionOptions()
 
-// help lldb by casting to int *
+# help lldb by casting to int *
 >>> val = lldb.frame.EvaluateExpression("(int *) $arg1", options)
 >>> print(val)
 (int *) $0 = 0x00007ffeefbff4f0
@@ -918,9 +1039,9 @@ Were you expecting it to have 4 children?  **lldb doesn't even know it is a poin
 int *
 ```
 
-### Stripped Binary, decayed pointers and memory writes
+## Stripped Binary, decayed pointers and memory writes
 
-##### Source code
+### Source code
 
 ```c
 void foo_void (int *input)
@@ -944,7 +1065,7 @@ int main (void) {
 
 When the breakpoint fires - I want to modify `tiny_array[3]`.  First, I will cast the register value to the type you expect:
 
-```bash
+```python
 >>> options = lldb.SBExpressionOptions()
 >>> ptr = lldb.frame.EvaluateExpression("(int *) $arg1", options)
 >>> print(ptr)
@@ -966,16 +1087,16 @@ int
 >>> new_int_as_bytes = str('\xFF\x00\x00\x00')
 >>> result = lldb.process.WriteMemory(offset, new_int_as_bytes, error)
 >>> if not error.Success() or result != len(new_int_as_bytes):
-... 	print('SBProcess.WriteMemory() failed!')
+...     print('SBProcess.WriteMemory() failed!')
 
 >>> offset = ptr.GetValueAsUnsigned() + 3 * ptr_size_type
 >>> print(lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type))
 (int) temp = 255
 
 >>> for i in range (0, 4):
-... 	offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
-... 	val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
-... 	print(offset, val.GetValueAsUnsigned())
+...     offset = ptr.GetValueAsUnsigned() + i * ptr_size_type
+...     val = lldb.target.CreateValueFromAddress("temp", lldb.SBAddress(offset, lldb.target), ptr_type)
+...     print(offset, val.GetValueAsUnsigned())
 
 (140732920755440, '1')
 (140732920755444, '2')
@@ -987,13 +1108,14 @@ int
 0x7ffeefbff4f0: 01 00 00 00 02 00 00 00 03 00 00 00 ff 00 00 00
 ```
 
-### Find, read and amend variable inside Parent Frame
+## Find, read and amend variable inside Parent Frame
 
-##### Source code
+### Source code
+
 ```c
 void foo_void ( float *input )
 {
-    printf("Pointer: %p.\n", input);      <-- Breakpoint here
+    printf("Pointer: %p.\n", input);      // <-- Breakpoint here
 }
 
 int main ( void ) {
@@ -1007,9 +1129,9 @@ int main ( void ) {
 }
 ```
 
-##### Solution
+### Solution
 
-```bash
+```python
 >>> print(lldb.frame.GetFunctionName())
 foo_void
 
@@ -1055,26 +1177,26 @@ float [4]
 16
 
 >>> for i in range (0, ptr.GetNumChildren()):
-... 	offset = ptr.GetLoadAddress() + i * (pointee_type.GetByteSize() / ptr.GetNumChildren())
-... 	print(offset, str(ptr.GetChildAtIndex(i)))
+...     offset = ptr.GetLoadAddress() + i * (pointee_type.GetByteSize() / ptr.GetNumChildren())
+...     print(offset, str(ptr.GetChildAtIndex(i)))
 ...
 (140732920755520, '(float) [0] = 1')
 (140732920755524, '(float) [1] = 2')
 (140732920755528, '(float) [2] = 3')
 (140732920755532, '(float) [3] = 4')
 
-
 >>> error = lldb.SBError()
 >>> result = ptr.GetChildAtIndex(i).SetValueFromCString('0xFF', error)
 
 >>> print(ptr.GetChildAtIndex(3))
 (float) [3] = 255
-
 ```
 
-### Structs
+## Structs
+
 C code:
-```
+
+```c
 // https://stackoverflow.com/questions/38251944/lldb-python-api-sbaddress-constructor-error
 
 struct Foo {
@@ -1084,7 +1206,7 @@ struct Foo {
 
 void bar_void ( void *input )
 {
-    printf("Pointer: %p.\n", input);		// BREAKPOINT HERE
+    printf("Pointer: %p.\n", input);        // BREAKPOINT HERE
 }
 
 int main ( void ) {
@@ -1093,9 +1215,10 @@ int main ( void ) {
     return 0;
 }
 ```
-LLDB commands:
-```
 
+LLDB commands:
+
+```python
 (lldb) fr v -L
 0x00007ffeefbff528: (void *) input = 0x00007ffeefbff550
 
@@ -1114,7 +1237,7 @@ struct Foo *
 
 >>> root = lldb.target.CreateValueFromAddress("root", lldb.SBAddress(0x00007ffeefbff538, lldb.target), ptr_type)
 
->> print(root)
+>>> print(root)
 (Foo *) root = 0x00007ffeefbff550
 
 >>> root.GetValue()
@@ -1126,8 +1249,10 @@ struct Foo *
 >>> root.GetChildAtIndex(1).GetValue()
 '222'
 ```
-### Symbols
-```
+
+## Symbols
+
+```python
 >>> process = lldb.debugger.GetSelectedTarget().GetProcess()
 >>> target = debugger.GetSelectedTarget()
 >>> target = lldb.debugger.GetSelectedTarget()
@@ -1136,39 +1261,48 @@ struct Foo *
 <class 'lldb.SBModule'>
 
 >>> for symbol in module:
-... 	name = symbol.GetName()
-... 	saddr = symbol.GetStartAddress()
-... 	print(name, saddr)
+...     name = symbol.GetName()
+...     saddr = symbol.GetStartAddress()
+...     print(name, saddr)
 ```
-### Advanced
-##### Check versions ( python, lldb )
-`script import sys; print(sys.version)`
-##### Launch
-`lldb attach -p $(ps x | grep -i -m1 debugger_challenge | awk '{print $1}')` // 'debugger_challenge' is app name
-##### Import lldb script
-`command source <file_path>/lldb_script.txt`
-##### Import Python script
-`command script import <file_path>/lldb_python.py`
 
-##### lldb command line ( no XCode )
-```
-- Kill xcode
-- Run iOS app in the simulator
-- lldb attach -p $(ps x | grep -i -m1 debugger_challenge | awk '{print $1}')
-```
-##### Watch Packets ( caution )
-`log enable gdb-remote packets`
-##### Custom prompt
-`settings set prompt \-\>`
-##### Print with NSLog
-`exp (void)NSLog(@"😀foobar woobar");`  // on a real iOS device, you don't need to `caflush` for this to appear in `console.app`
+## Advanced
 
-### Endians
+```lldb
+# Check versions (python, lldb)
+script import sys; print(sys.version)
+
+# Import lldb script
+command source <file_path>/lldb_script.txt
+
+# Import Python script
+command script import <file_path>/lldb_python.py
+
+# Watch Packets (caution)
+log enable gdb-remote packets
+
+# Custom prompt
+settings set prompt \-\>
+
+# Print with NSLog. On a real iOS device, you don't need to caflush for this to appear in Console.app
+exp (void)NSLog(@"😀foobar woobar");
 ```
+
+### lldb command line (no Xcode)
+
+Kill Xcode and run the iOS app in the simulator. Then attach from Terminal (`debugger_challenge` is the app name):
+
+```bash
+lldb attach -p $(ps x | grep -i -m1 debugger_challenge | awk '{print $1}')
+```
+
+## Endians
+
+```python
 >>> if byteOrder == lldb.eByteOrderLittle:
-... 	pass
+...     pass
 ... elif byteOrder == lldb.eByteOrderBig:
-... 	print("big endian")
+...     print("big endian")
 ...   byteOrder.reverse()
 
 >>> print(lldb.eByteOrderLittle)
@@ -1176,11 +1310,13 @@ struct Foo *
 >>> print(lldb.eByteOrderBig)
 1
 ```
-### stdout
+
+## stdout
+
 If you use `lldb --wait-for` or `lldb -attach` you are attaching **after** a decision on where to send `stdout` was made.  For example:
 
-```
-// NSLog only sent to Console.app when you attach
+```lldb
+# NSLog only sent to Console.app when you attach
 
 ./objc_playground_2
 ps -ax
@@ -1190,11 +1326,13 @@ lldb -p 3668
 (lldb) exp (void)NSLog(@"hello");
 (lldb) c
 Process 3668 resuming
-< you can see the output to NSLog when you open console.app >
+# you can see the output to NSLog when you open Console.app
 ```
+
 But you can control `stdout`.
-```
-$) lldb
+
+```lldb
+lldb
 (lldb) target create my_playground
 (lldb) process launch
 (lldb) exp @import Foundation
@@ -1202,16 +1340,25 @@ $) lldb
 2018-12-13 10:14:09.638801+0000 objc_playground_2[2776:61771] hello
 ```
 
-### Playing with the User Interface
-#### lldb - print all View Controllers connected to current hierarchy
-`(lldb) po [[[UIWindow keyWindow] rootViewController] _printHierarchy]`
+## Playing with the User Interface
 
-#### lldb - Recursive description of current view
-`po [[[UIApplication sharedApplication] keyWindow] recursiveDescription]`
+### lldb - print all View Controllers connected to current hierarchy
 
-#### UILabel change text
-Find the ID of the UIlabel after running the `recursiveDescription` command above.
+```lldb
+(lldb) po [[[UIWindow keyWindow] rootViewController] _printHierarchy]
 ```
+
+### lldb - Recursive description of current view
+
+```lldb
+(lldb) po [[[UIApplication sharedApplication] keyWindow] recursiveDescription]
+```
+
+### UILabel change text
+
+Find the ID of the UILabel after running the `recursiveDescription` command above.
+
+```lldb
 (lldb) e id $myLabel = (id)0x104ec9370
 
 (lldb) po $myLabel
@@ -1221,30 +1368,33 @@ Find the ID of the UIlabel after running the `recursiveDescription` command abov
 <UIStackView: 0x104ec8f70; frame = (56 0; 287 88); opaque = NO; autoresize = RM+BM; layer = <CATransformLayer: 0x1d443a620>>
 
 (lldb) p (int)[$myLabel setText:@"Bye World"]
-Nothing will happen.  You need to refresh the screen or continue the app.
+# Nothing will happen.  You need to refresh the screen or continue the app.
 
 (lldb) e (void)[CATransaction flush]
 ```
-#### Change background Color
-```
+
+### Change background Color
+
+```lldb
 (lldb) e id $myView2 = (id)0x104f474e0
 (lldb)  v
 <UIView: 0x104f474e0; frame = (0 0; 375 603); autoresize = RM+BM; layer = <CALayer: 0x1d0239c20>>
 (lldb) e (void)[$myView2 setBackgroundColor:[UIColor blueColor]]
 
 (lldb) caflush
-// this is the Chisel alias for e (void)[CATransaction flush]
+# this is the Chisel alias for e (void)[CATransaction flush]
 ```
 
-#### TabBar
-```
-po [[UIWindow keyWindow] rootViewController]
-e id $rootvc = (id)0x7fb9ce868200
-expression -lobjc -O -- [`$rootvc` _shortMethodDescription]
-expression (void)[$rootvc setSelectedIndex:1]
-caflush
-expression (void)[$rootvc setSelectedIndex:0]
-caflush
+### TabBar
+
+```lldb
+(lldb) po [[UIWindow keyWindow] rootViewController]
+(lldb) e id $rootvc = (id)0x7fb9ce868200
+(lldb) expression -lobjc -O -- [`$rootvc` _shortMethodDescription]
+(lldb) expression (void)[$rootvc setSelectedIndex:1]
+(lldb) caflush
+(lldb) expression (void)[$rootvc setSelectedIndex:0]
+(lldb) caflush
 
 (lldb) po [$rootvc selectedViewController]
 <tinyDormant.YDJediVC: 0x7fb9cd613a80>
@@ -1255,8 +1405,10 @@ caflush
 <tinyDormant.YDMandalorianVC: 0x7fb9cd41f1c0>
 )
 ```
-#### Part 1 : UITabBarController add a tab
-```
+
+### Part 1: UITabBarController add a tab
+
+```lldb
 (lldb) po [[UIWindow keyWindow] rootViewController]
 <UITabBarController: 0x7fdf0f036000>
 
@@ -1268,15 +1420,14 @@ caflush
 (lldb) po [$tbc description]
 <UITabBarController: 0x7fdf0f036000>
 
-// METHOD 1
+# METHOD 1
 (lldb) e Class $sithVcClass = (Class) objc_getClass("tinyDormant.YDSithVC")
 (lldb) e id $sithvc = (id)[$sithVcClass new]
 (lldb) po $sithvc
 <tinyDormant.YDSithVC: 0x7fb9cd426880>
 
-// METHOD 2
-e id $newClass = (id)class_createInstance($sithVcClass, 100);
-
+# METHOD 2
+(lldb) e id $newClass = (id)class_createInstance($sithVcClass, 100);
 
 (lldb) po [$tbc viewControllers]
 <__NSArrayM 0x6000029fc930>(
@@ -1284,14 +1435,14 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 <tinyDormant.YDMandalorianVC: 0x7fdf0ed23c50>
 )
 
-// Create mutable array
+# Create mutable array
 (lldb) e NSMutableArray *$listofvcontrollers = (NSMutableArray *)[$tbc viewControllers]
 
-// Add and Delete and View Controller from the array
+# Add and Delete and View Controller from the array
 (lldb) po [$listofvcontrollers addObject:$sithvc]
 (lldb) po [$listofvcontrollers removeObjectAtIndex:0]
 
-// Print the array
+# Print the array
 (lldb) po $listofvcontrollers
 <__NSArrayM 0x600001c32580>(
 <tinyDormant.YDMandalorianVC: 0x7fa476e15c40>,
@@ -1301,52 +1452,60 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 (lldb) po [$tbc setViewControllers:$listofvcontrollers]
  nil
 ```
-#### Part 2 : UITabBarController beautify
-```
- (lldb) search UITabBar
- <UITabBar: 0x7fa476e16be0; frame = (0 618; 375 49); autoresize = W+TM; gestureRecognizers = <NSArray: 0x60000082b690>; layer = <CALayer: 0x600000678b40>>
 
- (lldb) e id $tabs = (id)0x7fa476e16be0
+### Part 2: UITabBarController beautify
 
- (lldb) po [$tabs items]
- <__NSArrayI 0x600000826580>(
- <UITabBarItem: 0x7fae2f6164c0>,
- <UITabBarItem: 0x7fae2f6195a0>,
- <UITabBarItem: 0x7fae2f502380> selected
- )
+```lldb
+(lldb) search UITabBar
+<UITabBar: 0x7fa476e16be0; frame = (0 618; 375 49); autoresize = W+TM; gestureRecognizers = <NSArray: 0x60000082b690>; layer = <CALayer: 0x600000678b40>>
 
- (lldb) e int $sithIndex = [$listofvcontrollers indexOfObject:$sithvc]
- (lldb) po $sithIndex
- 2
+(lldb) e id $tabs = (id)0x7fa476e16be0
 
- (lldb) po [[[$tabs items] objectAtIndex:$sithIndex] setBadgeValue:@"99"];
+(lldb) po [$tabs items]
+<__NSArrayI 0x600000826580>(
+<UITabBarItem: 0x7fae2f6164c0>,
+<UITabBarItem: 0x7fae2f6195a0>,
+<UITabBarItem: 0x7fae2f502380> selected
+)
 
- (lldb) e UIImage *$sithimage = [UIImage imageNamed:@"approval"];
- (lldb) e [[[$tabs items] objectAtIndex:$sithIndex] setImage:$sithimage]
-  nil
- (lldb) caflush
-```
-#### Part 3 : UITabBarController add tint color
-```
-(lldb) po [$tabs barTintColor]
+(lldb) e int $sithIndex = [$listofvcontrollers indexOfObject:$sithvc]
+(lldb) po $sithIndex
+2
+
+(lldb) po [[[$tabs items] objectAtIndex:$sithIndex] setBadgeValue:@"99"];
+
+(lldb) e UIImage *$sithimage = [UIImage imageNamed:@"approval"];
+(lldb) e [[[$tabs items] objectAtIndex:$sithIndex] setImage:$sithimage]
  nil
- (lldb) e (void)[$tabs setBarTintColor: [UIColor lightGrayColor]]
+(lldb) caflush
+```
+
+### Part 3: UITabBarController add tint color
+
+```lldb
+(lldb) po [$tabs barTintColor]
+nil
+(lldb) e (void)[$tabs setBarTintColor: [UIColor lightGrayColor]]
 0x0000000108ea9e30
 
 (lldb) caflush
 
 (lldb) e (void)[$tabs setBarTintColor: [UIColor greenColor]]
 (lldb) caflush
- ```
-#### Part 3 : UINavigationBar add Right-Sided Button
 ```
+
+### Part 3: UINavigationBar add Right-Sided Button
+
+```lldb
 (lldb) search UINavigationBar
 (lldb) e id $nc = (id)0x113d960e0
 (lldb) po [$nc setBarTintColor: [UIColor greenColor]]
 (lldb) caflush
 ```
-#### Push a new ViewController
-```
+
+### Push a new ViewController
+
+```lldb
 (lldb) po [[UIWindow keyWindow] rootViewController]
 <UINavigationController: 0x105074a00>
 
@@ -1361,43 +1520,45 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 (lldb) e (void)[$rootvc pushViewController:$vc animated:YES]
 (lldb) caflush
 ```
-#### Advanced : Wiring a more complicated U.I.
- - [ ] Find a UITabBarController in memory
- - [ ] Create a new UINavigationController
- - [ ] Create a new UIViewController
- - [ ] Connect the UIViewController to the UINavigationController
- - [ ] Create a new array of UINavigationControllers
- - [ ] Check the View Hierarchy to ensure it is wired correctly
 
-```
- (lldb) search UITabBarController
- <UITabBarController: 0x7fa3b0029600>
+### Advanced: Wiring a more complicated U.I.
 
- (lldb) search UINavigationController
- <UINavigationController: 0x7fa3b0813600>
+- [ ] Find a UITabBarController in memory
+- [ ] Create a new UINavigationController
+- [ ] Create a new UIViewController
+- [ ] Connect the UIViewController to the UINavigationController
+- [ ] Create a new array of UINavigationControllers
+- [ ] Check the View Hierarchy to ensure it is wired correctly
 
- (lldb) po id $nc = [[UINavigationController alloc] initWithRootViewController:$sithvc]
- (lldb) po $nc
- <UINavigationController: 0x7fa3af80a000>
+```lldb
+(lldb) search UITabBarController
+<UITabBarController: 0x7fa3b0029600>
 
- (lldb) search UINavigationController
- <UINavigationController: 0x7fa3af81a200>
+(lldb) search UINavigationController
+<UINavigationController: 0x7fa3b0813600>
 
- <UINavigationController: 0x7fa3b0813600>
+(lldb) po id $nc = [[UINavigationController alloc] initWithRootViewController:$sithvc]
+(lldb) po $nc
+<UINavigationController: 0x7fa3af80a000>
 
- (lldb) po [$nc2 viewControllers]
- <__NSSingleObjectArrayI 0x600002005570>(
- <tinyDormant.YDSithVC: 0x7fa3af704430>
- )
+(lldb) search UINavigationController
+<UINavigationController: 0x7fa3af81a200>
 
- (lldb) e Class $sithVcClass = (Class) objc_getClass("tinyDormant.YDSithVC")
- (lldb) e id $sithvc = (id)[$sithVcClass new]
- (lldb) po $sithvc
- <tinyDormant.YDSithVC: 0x7fa3af704430>
+<UINavigationController: 0x7fa3b0813600>
 
-// NOW I NEED TO ADD IT...
+(lldb) po [$nc2 viewControllers]
+<__NSSingleObjectArrayI 0x600002005570>(
+<tinyDormant.YDSithVC: 0x7fa3af704430>
+)
 
- (lldb) po [[UIWindow keyWindow] rootViewController]
+(lldb) e Class $sithVcClass = (Class) objc_getClass("tinyDormant.YDSithVC")
+(lldb) e id $sithvc = (id)[$sithVcClass new]
+(lldb) po $sithvc
+<tinyDormant.YDSithVC: 0x7fa3af704430>
+
+# NOW I NEED TO ADD IT...
+
+(lldb) po [[UIWindow keyWindow] rootViewController]
 <UITabBarController: 0x7fa3b0029600>
 
 (lldb) e id $tbc = (id)0x7fa3b0029600
@@ -1407,14 +1568,14 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 (lldb) e NSMutableArray *$listofvcontrollers = (NSMutableArray *)[$tbc viewControllers]
 
 (lldb) po $listofvcontrollers
- <__NSArrayM 0x600002cb89f0>(
- <tinyDormant.YDJediVC: 0x7fa3af727240>,
- <UINavigationController: 0x7fa3b0813600>
- )
+<__NSArrayM 0x600002cb89f0>(
+<tinyDormant.YDJediVC: 0x7fa3af727240>,
+<UINavigationController: 0x7fa3b0813600>
+)
 
 (lldb) po [$listofvcontrollers addObject:$nc]
 
- (lldb) po $listofvcontrollers
+(lldb) po $listofvcontrollers
 <__NSArrayM 0x600002cb89f0>(
 <tinyDormant.YDJediVC: 0x7fa3af727240>,
 <UINavigationController: 0x7fa3b0813600>,
@@ -1429,21 +1590,24 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 (lldb) e id $tabs = (id)0x7fa476e16be0
 (lldb) e UIImage *$sithimage = [UIImage imageNamed:@"UIBarButtonSystemItemFastForward"]
 (lldb) e (void)[[[$tabs items] objectAtIndex:$sithIndex] setImage:$sithimage]
- nil
+nil
 
 (lldb) caflush
 ```
-**WARNING** - careful with copy and paste of text into lldb. I spent hours trying to work out why one the above commands was not working.
 
+**WARNING** - careful with copy and paste of text into lldb. I spent hours trying to work out why one of the above commands was not working.
 
+## Facebook's Chisel
 
-### Facebook's Chisel
-##### Read all Objects on a screen
-```
+### Read all Objects on a screen
+
+```lldb
 (lldb) pviews
 ```
-##### Change a Swift View border
-```
+
+### Change a Swift View border
+
+```lldb
 (lldb) pvc
 <UINavigationController 0x7fa47905fa00>, state: appeared, view: <UILayoutContainerView 0x7fa47862e9c0>
    | <DELETE_PROV_PROFILE_MACHINE.ydHomeVC 0x7fa47861dcc0>, state: appeared, view: <UIView 0x7fa4786327a0>
@@ -1451,32 +1615,40 @@ e id $newClass = (id)class_createInstance($sithVcClass, 100);
 (lldb) border -c red -w 1.0 0x7fa4786327a0
 (lldb) border -c red -w 5.0 0x7fa4786327a0
 ```
-##### Find View Controller (fvc)
-```
+
+### Find View Controller (fvc)
+
+```lldb
 (lldb) fvc --view=0x7fc2c4410970
 Found the owning view controller.
 <MYAPP.ydHomeVC: 0x7fc2c443d850>
 ```
-##### hide a View
-```
+
+### hide a View
+
+```lldb
 (lldb) pvc
-The current UIViewController that you want to hide…
+# The current UIViewController that you want to hide…
 <UIViewController 0x1067116e0>, state: appearing, view: <UIView 0x10b707740>
 
-lldb) hide 0x10b707740
+(lldb) hide 0x10b707740
 ```
-##### Show a hidden ViewControlller
-```
+
+### Show a hidden ViewController
+
+```swift
 var $window: UIWindow?
 $window = UIWindow(frame: UIScreen.main.bounds)
 let $mainViewController = ydHiddenVC()
 window?.rootViewController = $mainViewController
 $window?.makeKeyAndVisible()
+```
 
-https://medium.com/@Dougly/a-uiviewcontroller-and-uiviews-without-storyboard-swift-3-543096e78f2
-```
-##### UILabel fun
-```
+See <https://medium.com/@Dougly/a-uiviewcontroller-and-uiviews-without-storyboard-swift-3-543096e78f2>.
+
+### UILabel fun
+
+```lldb
 <UIButtonLabel: 0x7f826bd2b090; frame = (0 3; 56 20.5); text = 'Submit'; opaque = NO; userInteractionEnabled = NO; layer = <_UILabelLayer: 0x600003dc3ed0>>
    |    |    |    |    | <UILabel: 0x7f826be15710; frame = (148.5 12; 78.5 20.5); text = 'Feedback';
 
@@ -1485,15 +1657,17 @@ https://medium.com/@Dougly/a-uiviewcontroller-and-uiviews-without-storyboard-swi
 (lldb) border -c yellow -w 2.0 0x7f826be15710
 (lldb) border 0x7f826be15710
 ```
-##### Cast from Swift to Objective-C object
-```
+
+### Cast from Swift to Objective-C object
+
+```lldb
 <UILabel: 0x7f826bd2e8c0; frame = (33 10.5; 302 20); text = 'General feedback'; userInteractionEnabled = NO; layer = <_UILabelLayer: 0x600003db0e10>>
 (lldb) expression id $alien = (id)0x7f826bd2e8c0  // UILabel Object was created in Swift but you need access in Objective-C
 (lldb) po $alien
 <UILabel: 0x7f826bd2e8c0; frame = (33 10.5; 302 20); text = 'General feedback'; userInteractionEnabled = NO; layer = <_UILabelLayer: 0x600003db0e10>>
 (lldb) exp (void*)[$alien setText:@"odd"]
 (void *) $11 = 0x0000000107116010
-You won’t see anything until you..
+# You won’t see anything until you..
 
 (lldb) caflush
 
@@ -1501,8 +1675,9 @@ You won’t see anything until you..
 <UILabel: 0x7fd0b36444a0; frame = (172 12; 31 20.5); text = 'odd'; userInteractionEnabled = NO; layer = <_UILabelLayer: 0x6000031c8820>>
 ```
 
-##### Demangle Swift ViewController Names
-```
+### Demangle Swift ViewController Names
+
+```lldb
 (lldb) search UIView -m myFramework      // observe the de-mangled Swift name
 <myFramework.PageViewController: 0x7f826bf0c980>
 
@@ -1512,8 +1687,9 @@ _TtC8myFramework18PageViewController * [0x00007f826bf0c980]
 (lldb) search -r 0x7f826bf0c980       // Now get all references to ViewController
 ```
 
-### Thread Pause / Thread Exit
-```
+## Thread Pause / Thread Exit
+
+```text
 Thread ID: dec:2264260 hex: 0x228cc4
 Thread ID: dec:2264261 hex: 0x228cc5
 shark: 0
@@ -1528,45 +1704,47 @@ shark: 4
 jelly: 4
 Program ended with exit code: 0
 ```
-##### Output
+
+### Output
+
+```lldb
+(lldb) settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
+(lldb) thread list
+Process 3106 stopped
+thread: #1    0x1659a
+libsystem_kernel.dylib`__ulock_wait
+* thread: #2    0x165f7
+objc_playground_2`hello_world(voidptr=0x0000000100633f50)
+thread: #3    0x165f2
+libsystem_kernel.dylib`__workq_kernreturn
+thread: #4    0x165f4
+libsystem_kernel.dylib`__workq_kernreturn
+thread: #5    0x165f8
+objc_playground_2`hello_world(voidptr=0x0000000100634370)
+
+(lldb) exp NSTimeInterval $blockThreadTimer = 2
+(lldb) exp [NSThread sleepForTimeInterval:$blockThreadTimer]
+(lldb) c
+Process 49868 resuming
+[+]Tiger Shark: thread ID: 0x14a075
+[+]Lemon Shark: thread ID: 0x14a07a
+Tiger Shark: 0
+Tiger Shark: 1
+Tiger Shark: 2
+Tiger Shark: 3
+Tiger Shark: 4
+Lemon Shark: 5
+Lemon Shark: 6
+Lemon Shark: 7
+Lemon Shark: 8
+Lemon Shark: 9
 ```
- (lldb) settings set thread-format "thread: #${thread.index}\t${thread.id%tid}\n{ ${module.file.basename}{`${function.name-with-args}\n"
- (lldb) thread list
- Process 3106 stopped
- thread: #1    0x1659a
- libsystem_kernel.dylib`__ulock_wait
- * thread: #2    0x165f7
- objc_playground_2`hello_world(voidptr=0x0000000100633f50)
- thread: #3    0x165f2
- libsystem_kernel.dylib`__workq_kernreturn
- thread: #4    0x165f4
- libsystem_kernel.dylib`__workq_kernreturn
- thread: #5    0x165f8
- objc_playground_2`hello_world(voidptr=0x0000000100634370)
 
+## help lldb by setting the language
 
- (lldb) exp NSTimeInterval $blockThreadTimer = 2
- (lldb) exp [NSThread sleepForTimeInterval:$blockThreadTimer]
- (lldb) c
- Process 49868 resuming
- [+]Tiger Shark: thread ID: 0x14a075
- [+]Lemon Shark: thread ID: 0x14a07a
- Tiger Shark: 0
- Tiger Shark: 1
- Tiger Shark: 2
- Tiger Shark: 3
- Tiger Shark: 4
- Lemon Shark: 5
- Lemon Shark: 6
- Lemon Shark: 7
- Lemon Shark: 8
- Lemon Shark: 9
+### I hit this error too many times!
 
-```
-
-### help lldb by setting the language
-##### I hit this error too many times!
-```
+```lldb
 (lldb) e id $my_hello = [hello_from_objc new]
 
 error: <EXPR>:3:3: error: consecutive statements on a line must be separated by ';'
@@ -1574,38 +1752,58 @@ id $my_hello = [hello_from_objc new]
   ^
   ;
 ```
-##### Tell lldb you are using Objective-C
-`(lldb) expression -l objective-c -o -- id $my_hello = [hello_from_objc new]`
-##### print all instance methods available to you..
-`expression -lobjc -O -- [$my _shortMethodDescription]`
-##### Set the expression language to Swift explicitly:
-`(lldb) expression -l swift -o -- let $myHello = HelloClass()`
-##### Set the expression language to Swift and call a function
+
+### Tell lldb you are using Objective-C
+
+```lldb
+(lldb) expression -l objective-c -o -- id $my_hello = [hello_from_objc new]
+```
+
+### Print all instance methods available to you
+
+```lldb
+(lldb) expression -lobjc -O -- [$my _shortMethodDescription]
+```
+
+### Set the expression language to Swift explicitly
+
+```lldb
+(lldb) expression -l swift -o -- let $myHello = HelloClass()
+```
+
+### Set the expression language to Swift and call a function
+
+```lldb
 (lldb) expression -l swift -o -- $myHello.hello()
-##### Swift:
-`(lldb) settings set target.language swift`
-
-
-### lldb & rootless
-
-Apple's *[System Integrity Protection][5909c6c8]*
-
-  [5909c6c8]: https://developer.apple.com/library/archive/documentation/Security/Conceptual/System_Integrity_Protection_Guide/RuntimeProtections/RuntimeProtections.html "sip"
-
-```
-$ sudo lldb -n Finder
-(lldb) process attach —name "Finder"
-/* fails if you don't disable Rootless */
 ```
 
-### lldb bypass Certificate Pinning
-##### Bypass overview
-_"Do I trust the server,  before sending data?"_.  You will often find that question in iOS and Android app code.  It refers to `certificate pinning`.
+### Set the target language to Swift
+
+```lldb
+(lldb) settings set target.language swift
+```
+
+## lldb & rootless
+
+Apple's *[System Integrity Protection](https://developer.apple.com/library/archive/documentation/Security/Conceptual/System_Integrity_Protection_Guide/RuntimeProtections/RuntimeProtections.html)*
+
+```lldb
+sudo lldb -n Finder
+(lldb) process attach --name "Finder"
+# fails if you don't disable Rootless
+```
+
+## lldb bypass Certificate Pinning
+
+### Bypass overview
+
+*"Do I trust the server, before sending data?"*.  You will often find that question in iOS and Android app code.  It refers to `certificate pinning`.
 
 The below script overwrites the answer to that question.  The bypass requires a debugger (`lldb`) a scripting language (`python`) and writing values in memory (`registers`).
 
-##### Result
-```
+### Result
+
+```lldb
 (lldb) br s -a 0x1000013ae -N fooName
 Breakpoint 2: where = objc_play`-[YDURLSessionDel URLSession:didReceiveChallenge:completionHandler:] + 334 at main.m:19:5, address = 0x00000001000013ae
 
@@ -1624,18 +1822,24 @@ Process 48838 resuming
 🍭HTTP Response Code: 200
 🍭finish
 ```
-#### Background
-App's often used a `completionHandler` with Apple's `NSURLSession` on iOS and macOS when deciding whether to start a `network request`.  
 
-> completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, NULL);
+### Background
 
-The above line of code is typical of an app that has implemented `Certificate Pinning` and has decided to stop the network request from being sent.  
+Apps often used a `completionHandler` with Apple's `NSURLSession` on iOS and macOS when deciding whether to start a `network request`.
 
-##### Find the Needle in the Haystack
-If you ingested the executable file into a disassembler like **Hopper**, you could find the `assembly instruction` to patch out the answer.  
+```objc
+completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, NULL);
+```
+
+The above line of code is typical of an app that has implemented `Certificate Pinning` and has decided to stop the network request from being sent.
+
+### Find the Needle in the Haystack
+
+If you ingested the executable file into a disassembler like **Hopper**, you could find the `assembly instruction` to patch out the answer.
 
 Hopper had a really nice pseudo code flow of: `URLSession:didReceiveChallenge:completionHandler:`:
-```
+
+```objc
 /* @class YDURLSessionDel */
 -(void)URLSession:(void *)arg2 didReceiveChallenge:(void *)arg3 completionHandler:(void *)arg4 {
     var_30 = [[arg3 protectionSpace] serverTrust];
@@ -1647,14 +1851,18 @@ Hopper had a really nice pseudo code flow of: `URLSession:didReceiveChallenge:co
     return;
 }
 ```
+
 We care about the line: `(*(arg4 + 0x10))(arg4, 0x2, 0x0, arg4);`.
 
 In assembly, that is this instruction:
-```
+
+```text
 0x1000016ce <+174>: call   qword ptr [rcx + 0x10]
 ```
+
 Sure enough, if you set a `breakpoint` on this `instruction`:
-```
+
+```lldb
 (lldb) po $arg1
 <__NSStackBlock__: 0x7000050deba8>
  signature: "v24@?0q8@"NSURLCredential"16"
@@ -1677,7 +1885,8 @@ Sure enough, if you set a `breakpoint` on this `instruction`:
 ```
 
 What is the `2` value in the second register (`arg2`)?  If a server and connection was trusted or not, the result was often this value:
- ```
+
+```objc
 typedef NS_ENUM(NSInteger, NSURLSessionAuthChallengeDisposition) {
    NSURLSessionAuthChallengeUseCredential = 0,                                       /* Use the specified credential, which may be nil */
    NSURLSessionAuthChallengePerformDefaultHandling = 1,                              /* Default handling for the challenge - as if this delegate were not implemented; the credential parameter is ignored. */
@@ -1686,15 +1895,19 @@ typedef NS_ENUM(NSInteger, NSURLSessionAuthChallengeDisposition) {
 }
 ```
 
-##### Breakpoint and script
+### Breakpoint and script
+
 Most of the effort and skill was placing a breakpoint.
-```
+
+```lldb
 (lldb) br s -a 0x1000013ae -N fooName
 ```
+
 You could then - now you have named the breakpoint - add instructions to the breakpoint OR you could invoke a Python script from the command line.
 
 I choose to invoke my own Python script so it was simple to re-use this code on other apps. The main lines of the script were:
-```
+
+```python
 frame = exe_ctx.frame
 disposition = frame.FindRegister("rsi")
 if disposition.unsigned == 2:
@@ -1703,19 +1916,22 @@ if disposition.unsigned == 2:
      messages = {None: 'error', True: 'pass', False: 'fail'}
      print ("[*]PATCHING result: " + messages[result])
 ```
-The trick was `frame = exe_ctx.frame`.  If you didn't have this context - from https://lldb.llvm.org/use/python-reference.html - you would get stuck for hours / days.
 
-##### Try, try and try again
+The trick was `frame = exe_ctx.frame`.  If you didn't have this context - from <https://lldb.llvm.org/use/python-reference.html> - you would get stuck for hours / days.
+
+### Try, try and try again
+
 Like most bypass code, I tried multiple ideas.  I removed the details of failed ones for brevity.  If you care, essentially they were:
 
- - Set `completionHandler` to NULL
- - Overwrite the instruction with no operation ( a `NOP instruction` )
- - Passing a `NULL Objective-C block`
- - Passing a fake `Objective-C block`
- - Drop the `(NSURLAuthenticationChallenge *)challenge` ( failed as a lot of code depends on this challenge)
+- Set `completionHandler` to NULL
+- Overwrite the instruction with no operation (a `NOP instruction`)
+- Passing a `NULL Objective-C block`
+- Passing a fake `Objective-C block`
+- Drop the `(NSURLAuthenticationChallenge *)challenge` (failed as a lot of code depends on this challenge)
 
-##### Source
-```
+### Source
+
+```objc
 @interface YDURLSessionDel : NSObject <NSURLSessionDelegate>
 @end
 
@@ -1763,10 +1979,9 @@ int main(void) {
     }
     return 0;
 }
-
 ```
 
-### lldb on Jailbroken iOS device
+## lldb on Jailbroken iOS device
 
 ```bash
 # macOS - install iProxy
@@ -1788,18 +2003,17 @@ ps -ax | grep -i my_app
 debugserver localhost:6666 -a my_app
 
 # Hijack the app, before it starts
-
 debugserver localhost:6666 --waitfor my_app
 
 # start lldb from Terminal on macOS
-$ lldb
+lldb
 (lldb) process connect connect://localhost:6666
 (lldb) thread list
 ```
 
-##### Checkra1n Jailbreak
+### Checkra1n Jailbreak
 
->An SSH server is deployed on port 44 on localhost only.
+> An SSH server is deployed on port 44 on localhost only.
 
 ```bash
 iproxy 4444 44 &
@@ -1808,13 +2022,13 @@ ssh -p 4444 root@localhost
 
 Although SSH is installed by default, you need `scp` for file copying. I installed `openSSH` via `Cydia`.
 
-
-##### Electra Jailbreak
+### Electra Jailbreak
 
 Electra shipped with `debugserver`. Previous jailbreaks had lots of manual steps to get the correct `debugserver` onto the device.
+
 ![electra](images/2019/06/IMG_0069.png)
 
-##### Electra app will not open
+### Electra app will not open
 
 If you have a full Apple iOS developer license, you can code-sign `ad-hoc` apps to last one year. If the `Electra app` won't open, you can re-code sign the `ipa file`.  One way to achieve this:
 
@@ -1826,7 +2040,7 @@ If you have a full Apple iOS developer license, you can code-sign `ad-hoc` apps 
 
 Now `Electra` will work for another year.
 
-##### Electra specifics
+### Electra specifics
 
 When you select `Tweaks`, Electra runs the `debug-server` from a different path:
 
@@ -1838,42 +2052,46 @@ When you select `Tweaks`, Electra runs the `debug-server` from a different path:
 /usr/bin/debugserver localhost:6666 -a 794
 ```
 
-##### Terminted due to Code Signing Error
+### Terminated due to Code Signing Error
 
 You need to change the `entitlements` inside the app bundle.  Specifically: `<key>get-task-allow</key>`:
 
-```xml
+```bash
 security cms -D -i embedded.mobileprovision | grep -i -A 1 "get"
+```
+
+```xml
 <key>get-task-allow</key>
-	<true/>
+    <true/>
 ```
 
-##### References
+### References
 
-```
-https://github.com/dmayer/idb/wiki/How-to:-ssh-via-usb
-https://kov4l3nko.github.io/blog/2018-05-25-my-experience-with-lldb-and-electra-jb/
-```
+- <https://github.com/dmayer/idb/wiki/How-to:-ssh-via-usb>
+- <https://kov4l3nko.github.io/blog/2018-05-25-my-experience-with-lldb-and-electra-jb/>
 
-### lldb bypass iOS Jailbreak detections
-##### Connect debugger
+## lldb bypass iOS Jailbreak detections
+
+### Connect debugger
+
 Set your iOS debugserver to wait for the app to be opened.
 
-```
-ssh onto Jailbroken devices
+```bash
+# ssh onto the jailbroken device and install the app
 
-Install the app on JB device
+# on the jailbroken device (ssh session)
+/Developer/usr/bin/debugserver localhost:6666 -v DEBUG=1 -waitfor MYAPP
 
-root# /Developer/usr/bin/debugserver localhost:6666 -v DEBUG=1 -waitfor MYAPP   // on JB device ssh session
+# open the app now, the debugserver is waiting for a connection
 
-OPEN THE APP now the debugserver is waiting for a connection
-
-$) LLDB_SDK=ios lldb // from macOS machine
-
+# on macOS
+LLDB_SDK=ios lldb
 (lldb) process connect connect://localhost:6666
 ```
-##### Find the target
-```
+
+### Find the target
+
+```lldb
 (lldb) lookup jail
 ****************************************************
 2 hits in: MYAPP
@@ -1881,8 +2099,10 @@ $) LLDB_SDK=ios lldb // from macOS machine
 -[RSADeviceInfo jailBreak]
 -[RSADeviceInfo setJailBreak:]
 ```
-##### Attack the Setter
-```
+
+### Attack the Setter
+
+```lldb
 (lldb) b -[RSADeviceInfo setJailBreak:]
 Breakpoint 2: where = MYAPP`-[RSADeviceInfo setJailBreak:], address = 0x00000001033fe1fc
 
@@ -1891,7 +2111,6 @@ Process 1874 resuming
 Process 1874 stopped
 * thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1 2.1
     frame #0: 0x00000001033fe1fc MYAPP` -[RSADeviceInfo setJailBreak:]
-
 
 (lldb) p (char *) $arg2
 (char *) $2 = 0x00000001034bb104 "setJailBreak:"
@@ -1902,17 +2121,20 @@ Process 1874 stopped
 (lldb) p (int) $arg3
 (int) $5 = 5. // this is the value
 
-register write $arg3 0 // put the value 0 (clean?) in the setter
+(lldb) register write $arg3 0 // put the value 0 (clean?) in the setter
 ```
-##### Attack the getter
+
+### Attack the getter
+
 Kill the app and start the whole process of connecting again.
-```
+
+```lldb
 (lldb) b -[RSADeviceInfo jailBreak]
 Breakpoint 1: where = MYAPP`-[RSADeviceInfo jailBreak], address = 0x0000000100b821ec
 
 Process 1957 stopped
 
-(lldb) step until the return register is set $x0 on a physical iOS device
+# step until the return register is set ($x0 on a physical iOS device)
 
     frame #0: 0x0000000100b821f8 MYAPP` -[RSADeviceInfo jailBreak]  + 12
 MYAPP`-[RSADeviceInfo jailBreak]:
@@ -1925,36 +2147,50 @@ MYAPP`-[RSADeviceInfo jailBreak]:
 
 (lldb) p (int) $x0
 0
-🐝🐝 Success 🐝🐝.  
+# 🐝🐝 Success 🐝🐝
 ```
-##### Summary
+
+### Summary
+
 The `getter` example is a little more work; you have to place the `breakpoint`, `step` until it sets the `return register` and then modify the return value.  All of that can be automated.  Changing the `Setter` is normally a one-time only call.
 
-### lldb inspect third party SDK
-##### Get helper lldb scripts
-https://github.com/DerekSelander/LLDB
-##### Dump classes
-`dclass -o my_app`
-#### search classes on Heap
+## lldb inspect third party SDK
+
+### Get helper lldb scripts
+
+<https://github.com/DerekSelander/LLDB>
+
+### Dump classes
+
+```lldb
+(lldb) dclass -o my_app
 ```
+
+### search classes on Heap
+
+```lldb
 (lldb) search RSADeviceInfo
 <RSADeviceInfo: 0x1d019e780>
 ```
-#### Inspect interesting Methods
-```
+
+### Inspect interesting Methods
+
+```lldb
 (lldb) methods 0x1d019e780
 <RSADeviceInfo: 0x1d019e780>:
 in RSADeviceInfo:
-	Properties:
-		@property (retain) NSString* Timestamp;  (@synthesize Timestamp = Timestamp;)
-		@property (retain) NSString* HardwareID;  (@synthesize HardwareID = HardwareID;)
-		@property (retain) NSString* SIM_ID;  (@synthesize SIM_ID = SIM_ID;)
-		@property (retain) NSString* PhoneNumber;  (@synthesize PhoneNumber = PhoneNumber;)
-		@property (retain) RSAGeoLocationInfo* GeoLocation;  (@synthesize GeoLocation = GeoLocation;)
-		@property (retain) NSString* DeviceModel;  (@synthesize DeviceModel = DeviceModel;)
+    Properties:
+        @property (retain) NSString* Timestamp;  (@synthesize Timestamp = Timestamp;)
+        @property (retain) NSString* HardwareID;  (@synthesize HardwareID = HardwareID;)
+        @property (retain) NSString* SIM_ID;  (@synthesize SIM_ID = SIM_ID;)
+        @property (retain) NSString* PhoneNumber;  (@synthesize PhoneNumber = PhoneNumber;)
+        @property (retain) RSAGeoLocationInfo* GeoLocation;  (@synthesize GeoLocation = GeoLocation;)
+        @property (retain) NSString* DeviceModel;  (@synthesize DeviceModel = DeviceModel;)
 ```
-#### Invoke instance methods
-```
+
+### Invoke instance methods
+
+```lldb
 (lldb) po [0x1d019e780 DeviceName]
 Security iPhone 8
 
@@ -1964,8 +2200,10 @@ iPhone
 (lldb) po [0x1d019e780 jailBreak]
 0x0000000000000005  // very jailbroken
 ```
-#### Create a class
-```
+
+### Create a class
+
+```lldb
 (lldb) settings set target.language objc
 
 (lldb) exp RSADeviceInfo *$rsa = (id)[[RSADeviceInfo alloc] init]
@@ -1974,50 +2212,59 @@ iPhone
 <RSADeviceInfo: 0x1c819ddc0>
 ```
 
-### lldb lifting code ( iOS app )
+## lldb lifting code (iOS app)
+
 This article was written to show:
+
 - [x] a framework can be ripped out of an iOS app
 - [x] you can invoke Objective-C code without even importing the Modules
 
-##### Find the target app
-I found an app that was using a phone number validator.  This was publicly available from:
-https://github.com/iziz/libPhoneNumber-iOS
+### Find the target app
 
-##### Extract the App
+I found an app that was using a phone number validator.  This was publicly available from:
+<https://github.com/iziz/libPhoneNumber-iOS>
+
+### Extract the App
+
 I downloaded the app via the AppStore and then extracted it from a jailbroken device.
 
-##### Extract the Framwork
-Inside the app bundle, copy the entire `libPhoneNumber-iOS` framework.  Ignore the fact the Framwork is codesigned.  xCode will resign the Framework later, when you create a fresh app.
-##### Xcode
+### Extract the Framework
+
+Inside the app bundle, copy the entire `libPhoneNumber-iOS` framework.  Ignore the fact the Framework is codesigned.  Xcode will resign the Framework later, when you create a fresh app.
+
+### Xcode
+
 Create a new hello world project and drag in your lifted Framework.
 
 The "lifted" code inside an iOS app was thinned.  Don't try and run this on a simulator.  Run the app in debug mode and connect `lldb`.
 
-##### Dump the classes
-```
-[+] script to dump classes from: https://github.com/DerekSelander/LLDB
+### Dump the classes
 
-dclass -m libPhoneNumber_iOS
+Using the `dclass` script from <https://github.com/DerekSelander/LLDB>:
+
+```lldb
+(lldb) dclass -m libPhoneNumber_iOS
 
 Dumping classes
 ************************************************************
 NBPhoneNumberUtil
 NBPhoneNumberDesc
+```
 
-```
-##### attach lldb
-```
+### attach lldb
+
+```lldb
 (lldb) exp id $a = [NBPhoneNumberUtil new]
 (lldb) po $a
 <NBPhoneNumberUtil: 0x1c1c6b580>
 
 (lldb) expression -lobjc -O -- [$a _shortMethodDescription]
-// dumps all available Class, Properties and Instance Methods
+# dumps all available Class, Properties and Instance Methods
 
 (lldb) exp NSString *$b = @"497666777000"
 (lldb) exp NSString *$nn = nil
 (lldb) exp NSNumber *$cc = (NSNumber *)[$a extractCountryCode:$b nationalNumber:&$nn]
-// using the github page, find how to invoke a method via Objective C, then apply it via lldb
+# using the GitHub page, find how to invoke a method via Objective C, then apply it via lldb
 
 (lldb) p $cc
 (__NSCFNumber *) $cc = 0xb0000000000002c3 (long)49
@@ -2025,61 +2272,32 @@ NBPhoneNumberDesc
 (__NSCFString *) $nn = 0x00000001c4227be0 @"7666777000"
 ```
 
+## lldb references
 
-
-
-### lldb references
-#### Man page
-http://lldb.llvm.org/man/lldb.html
-#### Patching code
-https://www.inovex.de/blog/lldb-patch-your-code-with-breakpoints/
-#### LLDB-Python script with excellent examples
-https://rderik.com/blog/scanning-a-process-memory-using-lldb/
-#### UI manipulation
-https://www.objc.io/issues/19-debugging/lldb-debugging/
-#### Custom breakpoints
-https://lldb.llvm.org/use/python-reference.html#using-the-python-api-s-to-create-custom-breakpoints
-#### ASM arm instructions
-https://armconverter.com/
-#### iOS Syscalls
-https://www.theiphonewiki.com/wiki/Kernel_Syscalls#List_of_system_calls_from_iOS_6.0_GM_
-#### iOS Syscalls
-https://opensource.apple.com/source/xnu/xnu-4570.1.46/bsd/kern/syscalls.master
-#### Debugger technical background
-https://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1
-#### Breakpoint commands
-https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html
-#### Hardware Breakpoints
-https://reverse.put.as/2019/11/19/how-to-make-lldb-a-real-debugger/
-#### watchpoints
-https://www.raywenderlich.com/books/advanced-apple-debugging-reverse-engineering/v3.0/chapters/8-watchpoints#toc-chapter-011-anchor-001
-#### Fun cheat sheet
-https://gist.github.com/alanzeino/82713016fd6229ea43a8
-#### Inspiration
-https://github.com/DerekSelander/LLDB
-#### Multi-line lldb commands
-https://swifting.io/blog/2016/02/19/6-basic-lldb-tips/
-#### lldb cheatsheet
-https://www.nesono.com/sites/default/files/lldb%20cheat%20sheet.pdf
-#### some lldb commands
-https://gist.github.com/ryanchang/a2f738f0c3cc6fbd71fa
-#### great lldb overview
-https://www.bignerdranch.com/blog/xcode-breakpoint-wizardry/
-#### more lldb info
-https://www.objc.io/issues/19-debugging/lldb-debugging/
-#### lldb | python References
-https://lldb.llvm.org/python-reference.html
-#### ptrace Reference
-https://www.unvanquished.net/\~modi/code/include/x86\_64-linux-gnu/sys/ptrace.h.html 
-#### ptrace Anti-debugging
-http://www.vantagepoint.sg/blog/89-more-android-anti-debugging-fun
-#### ptrace Anti-debugging
-https://knight.sc/debugging/2018/08/15/macos-kernel-debugging.html
-#### ptrace enum values
-http://www.secretmango.com/jimb/Whitepapers/ptrace/ptrace.html
-#### anti-debug code samples
-https://gist.github.com/joswr1ght/fb8c9f4f3f9a2feebf7f https://www.theiphonewiki.com/wiki/Bugging\_Debuggers
-#### lldb and Blocks
-https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/WorkingwithBlocks/WorkingwithBlocks.html
-#### Different ARM and x86 Registers
-https://azeria-labs.com/arm-data-types-and-registers-part-2/
+- [Man page](http://lldb.llvm.org/man/lldb.html)
+- [Patching code](https://www.inovex.de/blog/lldb-patch-your-code-with-breakpoints/)
+- [LLDB-Python script with excellent examples](https://rderik.com/blog/scanning-a-process-memory-using-lldb/)
+- [UI manipulation](https://www.objc.io/issues/19-debugging/lldb-debugging/)
+- [Custom breakpoints](https://lldb.llvm.org/use/python-reference.html#using-the-python-api-s-to-create-custom-breakpoints)
+- [ASM arm instructions](https://armconverter.com/)
+- [iOS Syscalls](https://www.theiphonewiki.com/wiki/Kernel_Syscalls#List_of_system_calls_from_iOS_6.0_GM_)
+- [iOS Syscalls](https://opensource.apple.com/source/xnu/xnu-4570.1.46/bsd/kern/syscalls.master)
+- [Debugger technical background](https://eli.thegreenplace.net/2011/01/23/how-debuggers-work-part-1)
+- [Breakpoint commands](https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html)
+- [Hardware Breakpoints](https://reverse.put.as/2019/11/19/how-to-make-lldb-a-real-debugger/)
+- [watchpoints](https://www.raywenderlich.com/books/advanced-apple-debugging-reverse-engineering/v3.0/chapters/8-watchpoints#toc-chapter-011-anchor-001)
+- [Fun cheat sheet](https://gist.github.com/alanzeino/82713016fd6229ea43a8)
+- [Inspiration](https://github.com/DerekSelander/LLDB)
+- [Multi-line lldb commands](https://swifting.io/blog/2016/02/19/6-basic-lldb-tips/)
+- [lldb cheatsheet](https://www.nesono.com/sites/default/files/lldb%20cheat%20sheet.pdf)
+- [some lldb commands](https://gist.github.com/ryanchang/a2f738f0c3cc6fbd71fa)
+- [great lldb overview](https://www.bignerdranch.com/blog/xcode-breakpoint-wizardry/)
+- [more lldb info](https://www.objc.io/issues/19-debugging/lldb-debugging/)
+- [lldb | python References](https://lldb.llvm.org/python-reference.html)
+- [ptrace Reference](https://www.unvanquished.net/~modi/code/include/x86_64-linux-gnu/sys/ptrace.h.html)
+- [ptrace Anti-debugging](http://www.vantagepoint.sg/blog/89-more-android-anti-debugging-fun)
+- [ptrace Anti-debugging](https://knight.sc/debugging/2018/08/15/macos-kernel-debugging.html)
+- [ptrace enum values](http://www.secretmango.com/jimb/Whitepapers/ptrace/ptrace.html)
+- [anti-debug code samples](https://gist.github.com/joswr1ght/fb8c9f4f3f9a2feebf7f), <https://www.theiphonewiki.com/wiki/Bugging_Debuggers>
+- [lldb and Blocks](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/WorkingwithBlocks/WorkingwithBlocks.html)
+- [Different ARM and x86 Registers](https://azeria-labs.com/arm-data-types-and-registers-part-2/)
